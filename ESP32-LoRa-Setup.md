@@ -1,4 +1,4 @@
-# General:
+# General
 - Board type:   TTGO LORA SX1278 ESP32 0.96 OLED Display Module 16 Mt Bytes 128 Mt bit) 433Mhz For Arduino 
 - manufactor:   TTGO
 - Banggood:     [Banggood Link](https://www.banggood.com/2Pcs-LILYGO-TTGO-LORA-SX1278-ESP32-0_96-OLED-Display-Module-16-Mt-Bytes-128-Mt-bit-433Mhz-For-Arduino-p-1270420.html)
@@ -36,7 +36,7 @@ src: [randomnerdtutorials](https://randomnerdtutorials.com/ttgo-lora32-sx1276-ar
 add: [WiFi LoRa ESP32](https://iotbyhvm.ooo/wifi-lora-32-esp32/)
 
 1) Manage Libraries: LoRa by Sandeep Mistry, SSD1306, GFx
-2) Tools > Board and select the TTGO LoRa32-OLED V1 board
-3) Send Code: [LoRa-TTGO-Send](https://github.com/josephpal/esp32-LoraWAN/blob/master/examples/esp32-Lora-TTGO-Send/esp32-Lora-TTGO-Send.ino)
-4) Receive Code: [LoRa-TTGO-Receive](https://github.com/josephpal/esp32-LoraWAN/blob/master/examples/esp32-Lora-TTGO-Receive/esp32-Lora-TTGO-Receive.ino)
+2) Tools -> Board and select the TTGO LoRa32-OLED V1 board
+3) Send Code -> [LoRa-TTGO-Send](https://github.com/josephpal/esp32-LoraWAN/blob/master/examples/esp32-Lora-TTGO-Send/esp32-Lora-TTGO-Send.ino)
+4) Receive Code -> [LoRa-TTGO-Receive](https://github.com/josephpal/esp32-LoraWAN/blob/master/examples/esp32-Lora-TTGO-Receive/esp32-Lora-TTGO-Receive.ino)
 5) Change Band to 433E6
