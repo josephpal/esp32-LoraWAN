@@ -1,0 +1,2 @@
+# Example of a `.gitattributes` file which reclassifies `.ino` files as C++:
+*.ino linguist-language=C++
