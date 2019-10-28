@@ -9,7 +9,7 @@ An example of implementing a secure data transmission protocol for LoraWAN.
 * [Overview](#overview)
   * [Problem definition](#problem-definition)
   * [Objective of the documentation](#objective-of-the-documentation)
-*
+* [Usage](#usage)
 * [References](#references)
 
 <a name="introduction"></a>
@@ -26,6 +26,9 @@ An example of implementing a secure data transmission protocol for LoraWAN.
 
 <a name="objective-of-the-documentation"></a>
 ### Objective of the documentation
+
+<a name="usage"></a>
+## Usage
 
 <a name="references"></a>
 ## References
