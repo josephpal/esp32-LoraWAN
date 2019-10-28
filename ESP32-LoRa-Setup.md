@@ -1,4 +1,4 @@
-# General:
+# General
 - Board type:   TTGO LORA SX1278 ESP32 0.96 OLED Display Module 16 Mt Bytes 128 Mt bit) 433Mhz For Arduino 
 - manufactor:   TTGO
 - Banggood:     [Banggood Link](https://www.banggood.com/2Pcs-LILYGO-TTGO-LORA-SX1278-ESP32-0_96-OLED-Display-Module-16-Mt-Bytes-128-Mt-bit-433Mhz-For-Arduino-p-1270420.html)
@@ -20,8 +20,8 @@ and for [ubuntu](https://randomnerdtutorials.com/installing-the-esp32-board-in-a
 ## Install Heltec ESP32 Board&Examples (also works for our board)
 
 src: [Install ESP32 Arduino IDE](https://docs.heltec.cn/#/en/user_manual/how_to_install_esp32_Arduino)  
-add: [link ref. 1](https://github.com/Heltec-Aaron-Lee/WiFi_Kit_series), 
-[link ref. 2](https://imgaz.staticbg.com/images/oaupload/ser1/banggood/images/15/B3/40996a08-9df2-46a1-b320-9f9b1a8a16a1.jpg), [link ref. 3](https://iotbyhvm.ooo/wifi-lora-32-esp32/)
+add: link ref. [1](https://github.com/Heltec-Aaron-Lee/WiFi_Kit_series), 
+link ref. [2](https://imgaz.staticbg.com/images/oaupload/ser1/banggood/images/15/B3/40996a08-9df2-46a1-b320-9f9b1a8a16a1.jpg), link ref. [3](https://iotbyhvm.ooo/wifi-lora-32-esp32/)
 
 1) File -> Preferences: ```https://docs.heltec.cn/download/package_heltec_esp32_index.json```
 2) Board Manager: Heltec ESP32 install
@@ -32,11 +32,11 @@ add: [link ref. 1](https://github.com/Heltec-Aaron-Lee/WiFi_Kit_series),
 
 ## Use the TTGo Board and a example which is special made for this type of board  
 
-src: [randomnerdtutorials](https://randomnerdtutorials.com/ttgo-lora32-sx1276-arduino-ide/)
+src: [randomnerdtutorials](https://randomnerdtutorials.com/ttgo-lora32-sx1276-arduino-ide/)  
 add: [WiFi LoRa ESP32](https://iotbyhvm.ooo/wifi-lora-32-esp32/)
 
 1) Manage Libraries: LoRa by Sandeep Mistry, SSD1306, GFx
-2) Tools > Board and select the TTGO LoRa32-OLED V1 board
-3) Send Code:
-4) Receive Code:
+2) Tools -> Board and select the TTGO LoRa32-OLED V1 board
+3) Send Code -> [LoRa-TTGO-Send](https://github.com/josephpal/esp32-LoraWAN/blob/master/examples/esp32-Lora-TTGO-Send/esp32-Lora-TTGO-Send.ino)
+4) Receive Code -> [LoRa-TTGO-Receive](https://github.com/josephpal/esp32-LoraWAN/blob/master/examples/esp32-Lora-TTGO-Receive/esp32-Lora-TTGO-Receive.ino)
 5) Change Band to 433E6
