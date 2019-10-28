@@ -4,11 +4,11 @@
 An example of implementing a secure data transmission protocol for LoraWAN.
 
 ## Table of Contents
-* [Introduction](#introduction) \
-* [ESP32 Setup](#esp32-setup) \
-* [Overview](#overview) \
-  * [Problem definition](#problem-definition) \
-  * [Objective of the documentation](#objective-of-the-documentation) \
+* [Introduction](#introduction)
+* [ESP32 Setup](#esp32-setup)
+* [Overview](#overview)
+  * [Problem definition](#problem-definition)
+  * [Objective of the documentation](#objective-of-the-documentation)
 *
 * [References](#references)
 
