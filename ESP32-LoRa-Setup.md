@@ -20,8 +20,8 @@ and for [ubuntu](https://randomnerdtutorials.com/installing-the-esp32-board-in-a
 ## Install Heltec ESP32 Board&Examples (also works for our board)
 
 src: [Install ESP32 Arduino IDE](https://docs.heltec.cn/#/en/user_manual/how_to_install_esp32_Arduino)  
-add: [link ref. 1](https://github.com/Heltec-Aaron-Lee/WiFi_Kit_series), 
-[link ref. 2](https://imgaz.staticbg.com/images/oaupload/ser1/banggood/images/15/B3/40996a08-9df2-46a1-b320-9f9b1a8a16a1.jpg), [link ref. 3](https://iotbyhvm.ooo/wifi-lora-32-esp32/)
+add: link ref. [1](https://github.com/Heltec-Aaron-Lee/WiFi_Kit_series), 
+link ref. [2](https://imgaz.staticbg.com/images/oaupload/ser1/banggood/images/15/B3/40996a08-9df2-46a1-b320-9f9b1a8a16a1.jpg), link ref. [3](https://iotbyhvm.ooo/wifi-lora-32-esp32/)
 
 1) File -> Preferences: ```https://docs.heltec.cn/download/package_heltec_esp32_index.json```
 2) Board Manager: Heltec ESP32 install
@@ -32,7 +32,7 @@ add: [link ref. 1](https://github.com/Heltec-Aaron-Lee/WiFi_Kit_series),
 
 ## Use the TTGo Board and a example which is special made for this type of board  
 
-src: [randomnerdtutorials](https://randomnerdtutorials.com/ttgo-lora32-sx1276-arduino-ide/)
+src: [randomnerdtutorials](https://randomnerdtutorials.com/ttgo-lora32-sx1276-arduino-ide/)  
 add: [WiFi LoRa ESP32](https://iotbyhvm.ooo/wifi-lora-32-esp32/)
 
 1) Manage Libraries: LoRa by Sandeep Mistry, SSD1306, GFx
