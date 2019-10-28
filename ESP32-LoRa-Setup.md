@@ -37,6 +37,6 @@ add: [WiFi LoRa ESP32](https://iotbyhvm.ooo/wifi-lora-32-esp32/)
 
 1) Manage Libraries: LoRa by Sandeep Mistry, SSD1306, GFx
 2) Tools > Board and select the TTGO LoRa32-OLED V1 board
-3) Send Code:
-4) Receive Code:
+3) Send Code: [LoRa-TTGO-Send](https://github.com/josephpal/esp32-LoraWAN/blob/master/examples/esp32-Lora-TTGO-Send/esp32-Lora-TTGO-Send.ino)
+4) Receive Code: [LoRa-TTGO-Receive](https://github.com/josephpal/esp32-LoraWAN/blob/master/examples/esp32-Lora-TTGO-Receive/esp32-Lora-TTGO-Receive.ino)
 5) Change Band to 433E6
