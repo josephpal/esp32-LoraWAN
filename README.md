@@ -9,33 +9,23 @@ An example of implementing a secure data transmission protocol for LoraWAN.
 * [Overview](#overview) \
   * [Problem definition](#problem-definition) \
   * [Objective of the documentation](#objective-of-the-documentation) \
-* 4.
-* 5. [References](#references)
+*
+* [References](#references)
 
 <a name="introduction"></a>
 ## Introduction
 
-Content...
-
 <a name="esp32-setup"></a>
 ## ESP32 Setup
-
-Content...
 
 <a name="overview"></a>
 ## Overview
 
-Content...
-
 <a name="problem-definition"></a>
 ### Problem definition
 
-Content...
-
 <a name="objective-of-the-documentation"></a>
 ### Objective of the documentation
-
-Content...
 
 <a name="references"></a>
 ## References
