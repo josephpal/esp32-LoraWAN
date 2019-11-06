@@ -3,6 +3,10 @@
   Complete project details at https://RandomNerdTutorials.com/ttgo-lora32-sx1276-arduino-ide/
 *********/
 
+//example class include
+
+#include "OLEDDisplay.h"
+
 //Libraries for LoRa
 #include <SPI.h>
 #include <LoRa.h>
@@ -36,8 +40,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RST);
 
 String LoRaData;
 
-void setup() { 
-  
+void setup() {   
   //reset OLED display via software
   pinMode(OLED_RST, OUTPUT);
   digitalWrite(OLED_RST, LOW);
@@ -57,11 +60,18 @@ void setup() {
   display.setCursor(0,0);
   display.print("LORA RECEIVER ");
   display.display();
-  
+
   //initialize Serial Monitor
   Serial.begin(115200);
 
-  Serial.println("LoRa Receiver Test");
+  OLEDDisplay oledDisp1(2, "pm1");
+  OLEDDisplay oledDisp2(3, "pm2");
+
+  //Serial.println("LoRa Receiver Test");
+
+  oledDisp1.printMessage("test1");
+  oledDisp2.printMessage("test2");
+  
   
   //SPI LoRa pins
   SPI.begin(SCK, MISO, MOSI, SS);
@@ -72,7 +82,7 @@ void setup() {
     Serial.println("Starting LoRa failed!");
     while (1);
   }
-  Serial.println("LoRa Initializing OK!");
+  //Serial.println("LoRa Initializing OK!");
   display.setCursor(0,10);
   display.println("LoRa Initializing OK!");
   display.display();  

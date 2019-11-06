@@ -24,7 +24,7 @@
 //866E6 for Europe
 //915E6 for North America
 #define BAND 433E6
-
+LoRa
 //OLED pins
 #define OLED_SDA 4
 #define OLED_SCL 15 
