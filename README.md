@@ -54,7 +54,7 @@ Confirm the window, go to ``Tools -> Board -> Boards Manager...`` and wait until
 
 <p align="center"><img width="65%" src="manage-libraries.png"></p>
 
-If the installation finishes sucessfully, you should now be able to compileand run the basic LoRAWAN Send/Receive examples, which you can find under the sub directory ``examples/``.
+If the installation finishes sucessfully, you should now be able to compileand run the basic LoRAWAN Send/Receive examples, which you can find under the sub directory ``examples/``. You only have to make sure to change the frequency band to 433MHz, and choosing the right hardware platform under ``Tools -> Board -> TTGO LoRa32-OLED V1 board``.
 
 ### Pinout
 
