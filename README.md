@@ -82,7 +82,7 @@ The next to chapters will focus on a short summary about the main problem using 
 <a name="usage"></a>
 ## Usage
 
-*TODO*: Example call of our created class, description what is necessary and which parameters are passed. Explanation of the thrad communication.
+*TODO*: Example call of our created class, description what is necessary and which parameters are passed. Explanation of the thread communication.
 
 <a name="references"></a>
 ## References
