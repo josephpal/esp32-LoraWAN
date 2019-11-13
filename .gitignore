@@ -1,0 +1,7 @@
+src/esp32-LoRaProtocol/core/
+src/esp32-LoRaProtocol/libraries/
+src/esp32-LoRaProtocol/Release/
+src/esp32-LoRaProtocol/.settings
+src/esp32-LoRaProtocol/sloeber.ino.cpp
+src/esp32-LoRaProtocol/spec.d
+src/esp32-LoRaProtocol/.cproject
