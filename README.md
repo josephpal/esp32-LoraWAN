@@ -42,7 +42,19 @@ Our board consits of the following components:
   - operating temperature range: -40°C to +90°C
 - [Adafruit OLED 1306](https://www.banggood.com/1_3-Inch-4Pin-White-OLED-LCD-Display-12864-IIC-I2C-Interface-Module-For-Arduino-p-1067874.html?rmmds=search&cur_warehouse=CN) 0.96" display with 128x64 pixel, I2C interface
 
+First of all, we have to install several libraries to work with the current hardware setup. After installing the latest Arduino IDE version, we have to install the ESP32 core to our arduino installation like mentioned in the [ESP32-LoRa-Setup.md](https://github.com/josephpal/esp32-LoraWAN/blob/master/ESP32-LoRa-Setup.md) readme file. Therefore, an additional boards manager URL has to be added regarding to the following picture:
 
+<p align="center"><img width="65%" src="arduino-setup.png"></p>
+
+Confirm the window, go to ``Tools -> Board -> Boards Manager...`` and wait until all neccessary files are installed and set up. After that you are able to proceed with the next steps. Now we can install the additional libraries to work with the OLED display or the LoRaWAN hardware. To get this done, open the menu entry under ``Tools -> Manage Libraries...`` and search and install the following libraries [see also in [ESP32-LoRa-Setup.md](https://github.com/josephpal/esp32-LoraWAN/blob/master/ESP32-LoRa-Setup.md)]:
+
+- LoRa by Sandeep Mistry
+- Adafruit SSD1306
+- Adafruit GFx
+
+<p align="center"><img width="65%" src="manage-libraries.png"></p>
+
+If the installation finishes sucessfully, you should now be able to compileand run the basic LoRAWAN Send/Receive examples, which you can find under the sub directory ``examples/``.
 
 ### Pinout
 
