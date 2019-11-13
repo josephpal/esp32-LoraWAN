@@ -15,20 +15,60 @@ An example of implementing a secure data transmission protocol for LoraWAN.
 <a name="introduction"></a>
 ## Introduction
 
+LoraWAN is a open, non encrypted data transmission protocoll, which uses *unlicensed radio spectrum in the Industrial, Scientific, and Medical (ISM) bands to enable low power and wide area communication between remote sensors* [4](#references) and different clients connected to the network. It usually uses three different frequency bands regarding to the local restrictions by several regions: 433E6 for Asia (433MHz), 866E6 for Europe (866MHz), 915E6 for North America (915MHz).
+
 <a name="esp32-setup"></a>
 ## ESP32 Setup
+
+Currently, we are using the LILYGO® TTGO LORA SX1278 ESP32 module, an ESP32 micrcontroller with an integrated LoRAWAN chip and a additional OLED display. 
+
+### Hardware description
+
+Our board consits of the following components:
+- a [SX1278](https://www.semtech.com/products/wireless-rf/lora-transceivers/sx1278) LoRA WAN remote modem chip from Semtech
+  - bidirectional send/receive module (but __not__ at the same time!) via SPI interface
+  - 433MHz frequency, high sensitivity around -148dBm
+  - +20dBm output power
+  - Data rates: 150 Mbps@11n HT40, 72 Mbps@11n HT20, 54 Mbps@11g, 11 Mbps@11b
+  - Transmit power: 19.5 dBm@11b, 16.5 dBm@11g, 15.5 dBm@11n
+  - Receiver sensitivity up to -98 dBm
+  - UDP sustained throughput of 135 Mbps
+- the main microcontroller also known as [ESP32](https://www.espressif.com/en/products/hardware/esp32/overview)
+  - integrated WiFi module and antenna
+  - integrated BLE module with antenna (same as for the WiFi)
+  - Tensilica Xtensa LX6 dual core processor with up to 240MHz clock speed
+  - 512kb RAM, 32bit architecture
+  - operating voltage: 3.3V to 7V (powered by USB or external LiPo; charging/discharging circut onboard available)
+  - operating temperature range: -40°C to +90°C
+- [Adafruit OLED 1306](https://www.banggood.com/1_3-Inch-4Pin-White-OLED-LCD-Display-12864-IIC-I2C-Interface-Module-For-Arduino-p-1067874.html?rmmds=search&cur_warehouse=CN) 0.96" display with 128x64 pixel, I2C interface
+
+
+
+### Pinout
+
+In the following picture shows a detailed overview about the current pin assigment of the TTGO LORA SX1278 ESP32 module.
+
+<p align="center"><img width="90%" src="https://imgaz.staticbg.com/images/oaupload/ser1/banggood/images/15/B3/40996a08-9df2-46a1-b320-9f9b1a8a16a1.jpg"></img></p>
 
 <a name="overview"></a>
 ## Overview
 
+The next to chapters will focus on a short summary about the main problem using LoRaWAN as an transmission protocoll and the main aim of this project.
+
 <a name="problem-definition"></a>
 ### Problem definition
+
+...
 
 <a name="objective-of-the-documentation"></a>
 ### Objective of the documentation
 
+...
+
 <a name="usage"></a>
 ## Usage
+
+*TODO*: Example call of our created class, description what is necessary and which parameters are passed. Explanation of the thrad communication.
 
 <a name="references"></a>
 ## References
