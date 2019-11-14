@@ -46,7 +46,7 @@ First of all, we have to install several libraries to work with the current hard
 
 <p align="center"><img width="65%" src="arduino-setup.png"></p>
 
-Confirm the window, go to ``Tools -> Board -> Boards Manager...`` and wait until all neccessary files are installed and set up. After that you are able to proceed with the next steps. Now we can install the additional libraries to work with the OLED display or the LoRaWAN hardware. To get this done, open the menu entry under ``Tools -> Manage Libraries...`` and search and install the following libraries [see also in [ESP32-LoRa-Setup.md](https://github.com/josephpal/esp32-LoraWAN/blob/master/ESP32-LoRa-Setup.md)]:
+Confirm the window, go to ``Tools -> Board -> Boards Manager...``, search for esp32 with confirming the installation and wait until all neccessary files are downloaded and set up. After that you are able to proceed with the next steps. Now we can install the additional libraries to work with the OLED display or the LoRaWAN hardware. To get this done, open the menu entry under ``Tools -> Manage Libraries...`` and search and install the following libraries [see also in [ESP32-LoRa-Setup.md](https://github.com/josephpal/esp32-LoraWAN/blob/master/ESP32-LoRa-Setup.md)]:
 
 - LoRa by Sandeep Mistry
 - Adafruit SSD1306
