@@ -13,29 +13,54 @@ LoRaHandler::LoRaHandler() {
 	}
 
 	outgoing = "";
-
 	msgCount = 0;
-	localAddress = 0xBB;
-	destination = 0xFF;
+
+	setLocalAddress(0xAA);
+	setDestination(0xFF);
+	setFrequency(ASIA);
 }
 
 LoRaHandler::~LoRaHandler() {
 	// TODO Auto-generated destructor stub
 }
 
-void LoRaHandler::initialize() {
+LoRaHandler::LoRaHandler(FrequencyBand band, byte localAddress, byte destination) {
+	if(!Serial) {
+		Serial.begin(115200);
+	}
+
+	setFrequency(band);
+	setLocalAddress(localAddress);
+
+	if ( localAddress != destination ) {
+		setDestination(destination);
+	} else {
+		setDestination(0xFF);
+
+		Serial.println("[lora] error: localAddress and destination match!");
+		Serial.println("[lora] => changed destination address to broadcast: 0xFF.");
+	}
+}
+
+void LoRaHandler::initialize(byte localAddress, byte destination) {
+	// set local dev	LoRaHandler(FrequencyBand band, byte localAddress, byte destination);	LoRaHandler(FrequencyBand band, byte localAddress, byte destination);	LoRaHandler(FrequencyBand band, byte localAddress, byte destination);ice and destination address
+	setLocalAddress(localAddress);
+	setDestination(destination);
+
 	//SPI LoRa pins
 	SPI.begin(SCK, MISO, MOSI, SS);
+
 	//setup LoRa transceiver module
 	LoRa.setPins(SS, RST, DIO0);
 
-	if (!LoRa.begin(BAND)) {             // initialize ratio at default frequnecy
-		Serial.println("LoRa init failed. Check your connections.");
+	if (!LoRa.begin(getFrequency())) {      // initialize ratio at default frequnecy
+		Serial.println("[lora] error: LoRa init failed. Check your connections.");
 		while (true);                       // if failed, do nothing
 	}
 
-	Serial.println("LoRa init succeeded.");
+	Serial.println("[lora] LoRa init succeeded.");
 }
+
 
 void LoRaHandler::send(String outgoing) {
 
@@ -87,22 +112,44 @@ void LoRaHandler::setTxPower(int powerdB) {
 }
 
 void LoRaHandler::setFrequencyBand(FrequencyBand band) {
-	long frequency = 0;
+	setFrequency(band);
+	LoRa.setFrequency(getFrequency());
+}
 
+
+byte LoRaHandler::getDestination() {
+	return destination;
+}
+
+void LoRaHandler::setDestination(byte destination) {
+	this->destination = destination;
+}
+
+byte LoRaHandler::getLocalAddress() {
+	return localAddress;
+}
+
+void LoRaHandler::setLocalAddress(byte localAddress) {
+	this->localAddress = localAddress;
+}
+
+long LoRaHandler::getFrequency() {
+	return frequency;
+}
+
+void LoRaHandler::setFrequency(FrequencyBand band) {
 	switch (band) {
 		case ASIA:
-			frequency = 433E6;
+			this->frequency = 433E6;
 			break;
 		case EUROPE:
-			frequency = 866E6;
+			this->frequency = 866E6;
 			break;
 		case NORTHAMERICA:
-			frequency = 915E6;
+			this->frequency = 915E6;
 			break;
 		default:
-			frequency = 433E6;
+			this->frequency = 433E6;
 			break;
 	}
-
-	LoRa.setFrequency(frequency);
 }

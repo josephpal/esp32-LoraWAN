@@ -17,9 +17,9 @@
  *									has to be the same on Sender and Receiver, otherwise the incoming message will be ignored
  *					destination  ->	by default, it is set to the broadcast address, is used to receive global message from different clients.
  *
- *					Example:		client 1 (destination: 0xFF, localAddress: 0xBB)
- *									client 2 (destination: 0xBB, localAddress: 0xCC)
- *									client 2 (destination: 0xBB, localAddress: 0xDD)
+ *					Example:		client 1 (destination: 0xFF, localAddress: 0xBB) => 1->2,3 (broadcast)
+ *									client 2 (destination: 0xBB, localAddress: 0xCC) => 2->1 (direct), 2->3 doesn't work
+ *									client 3 (destination: 0xEE, localAddress: 0xDD) => can not call anyone
  *  notifications:
  *
  *
@@ -50,7 +50,6 @@
  * 	default device frequency (433MHz)
  * 	can be changed during the call of the constructor or initialize(...)
  */
-#define BAND 433E6
 
 enum FrequencyBand {
 	ASIA,
@@ -60,6 +59,9 @@ enum FrequencyBand {
 
 class LoRaHandler {
 public:
+
+	/* ================================= device setup ================================== */
+
 	/** ...
 	 *
 	 *  @param
@@ -68,13 +70,21 @@ public:
 	LoRaHandler();
 	~LoRaHandler();
 
+	/** overloaded constructor
+	 *
+	 *  @param
+	 *  @return
+	*/
+	LoRaHandler(FrequencyBand band, byte localAddress, byte destination);
+
 	/** ...
 	 *
 	 *  @param
 	 *  @return
 	*/
-	void initialize();
+	void initialize(byte localAddress, byte destination);
 
+	/* ================================ device functions ================================ */
 
 	/** ...
 	 *
@@ -97,12 +107,31 @@ public:
 	*/
 	void setTxPower(int powerdB);
 
-	/** ...
+	/** set the device frequency property and at the same time the real frequency of the device itself
 	 *
 	 *  @param
-	 *  @return
+	 *  @return	---
 	*/
 	void setFrequencyBand(FrequencyBand band);
+
+	/* =============================== Getters and Setters =============================== */
+
+	byte getDestination();
+
+	void setDestination(byte destination);
+
+	byte getLocalAddress();
+
+	void setLocalAddress(byte localAddress);
+
+	long getFrequency();
+
+	/** this will only set the device frequency property of the class and not the device frequency
+	 *
+	 *  @param	frequency band enum (ASIA -> 433E6, EUROPE -> 866E6, NORTHAMERICA->915E6)
+	 *  @return ---
+	*/
+	void setFrequency(FrequencyBand band);
 
 private:
 	/*
@@ -112,16 +141,17 @@ private:
 
 	/*
 	 * 	msgCount:		count of outgoing messages; amount of message, which are already transmitted
-	 * 	localAddress:	address of this device in hex, e.g 0xBB
-	 * 	destination:
+	 * 	localAddress:	address of this device in hex, e.g 0xAA
+	 * 	destination:	address of the communication partner, like 0xBB, default: 0xFF (broadcast address)
 	 */
 	byte msgCount;				// count of outgoing messages
 	byte localAddress;			// address of this device
 	byte destination;			// destination to send to
 
 	/*
-	 *
+	 *	LoRa WAN device frequency (class property!) (433, 866, 915 MHz)
 	 */
+	long frequency;
 
 };
 
