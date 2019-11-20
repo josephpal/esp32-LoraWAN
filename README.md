@@ -72,12 +72,13 @@ The next to chapters will focus on a short summary about the main problem using 
 <a name="problem-definition"></a>
 ### Problem definition
 
-...
+There are two main problems in the trasmission process. Like it was descriebed earlier, LoraWAN is an open system, tht means everyone can use it. Thats why we have to check if the channel isn't used before sending something. The second problem is a security problem. The LoraWAN protocol doesn´t conntain an encryption process, so we have to encryped the data on our own before sending it. The last smal problem is the comunicaation with the dispaly. Even though we have an example it is some code necessary to cofigururate the display and show text on it, so it would be an advantage to organise this.
+
 
 <a name="objective-of-the-documentation"></a>
 ### Objective of the documentation
 
-...
+So we have two aims for this project. First of all, we have to develop two classes. One bigger one for the LoraWAN system and a smaller one for the display. The second aim is the realization of an encrypion and a descrytion for the data. 
 
 <a name="usage"></a>
 ## Usage
