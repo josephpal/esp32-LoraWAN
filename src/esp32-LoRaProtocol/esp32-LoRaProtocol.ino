@@ -21,7 +21,10 @@ void setup() {
 
 	// initialize LoRa WAN device
 	lora = new LoRaHandler();
-	lora->initialize(0xAA, 0xBB);
+	lora->initialize(0xBB, 0xAA);
+	lora->setTxPower(17);
+
+	lora->startReceiveListner();
 }
 
 void loop() {

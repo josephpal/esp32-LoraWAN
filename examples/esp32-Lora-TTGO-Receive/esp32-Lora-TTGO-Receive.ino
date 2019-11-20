@@ -5,8 +5,6 @@
 
 //example class include
 
-#include "OLEDDisplay.h"
-
 //Libraries for LoRa
 #include <SPI.h>
 #include <LoRa.h>
@@ -63,15 +61,6 @@ void setup() {
 
   //initialize Serial Monitor
   Serial.begin(115200);
-
-  OLEDDisplay oledDisp1(2, "pm1");
-  OLEDDisplay oledDisp2(3, "pm2");
-
-  //Serial.println("LoRa Receiver Test");
-
-  oledDisp1.printMessage("test1");
-  oledDisp2.printMessage("test2");
-  
   
   //SPI LoRa pins
   SPI.begin(SCK, MISO, MOSI, SS);
@@ -89,36 +78,52 @@ void setup() {
 }
 
 void loop() {
-
+  
   //try to parse packet
   int packetSize = LoRa.parsePacket();
+  
   if (packetSize) {
     //received a packet
-    Serial.print("Received packet ");
-
-    //read packet
+    Serial.println("Received packet: ");
+    
+    // read packet header bytes:
+    int recipient = LoRa.read();          // recipient address
+    byte sender = LoRa.read();            // sender address
+    byte incomingMsgId = LoRa.read();     // incoming msg ID
+    byte incomingLength = LoRa.read();    // incoming msg length
+    
+    LoRaData = "";
+    
     while (LoRa.available()) {
-      LoRaData = LoRa.readString();
-      Serial.print(LoRaData);
+      LoRaData += (char)LoRa.read();
     }
-
-    //print RSSI of packet
-    int rssi = LoRa.packetRssi();
-    Serial.print(" with RSSI ");    
-    Serial.println(rssi);
-
-   // Dsiplay information
-   display.clearDisplay();
-   display.setCursor(0,0);
-   display.print("LORA RECEIVER");
-   display.setCursor(0,20);
-   display.print("Received packet:");
-   display.setCursor(0,30);
-   display.print(LoRaData);
-   display.setCursor(0,40);
-   display.print("RSSI:");
-   display.setCursor(30,40);
-   display.print(rssi);
-   display.display();   
+    
+    if (incomingLength != LoRaData.length()) {   // check length for error
+      Serial.println("error: message length does not match length");
+      return;                             // skip rest of function
+    }
+    
+    Serial.println("Received from: 0x" + String(sender, HEX));
+    Serial.println("Sent to: 0x" + String(recipient, HEX));
+    Serial.println("Message ID: " + String(incomingMsgId));
+    Serial.println("Message length: " + String(incomingLength));
+    Serial.println("Message: " + LoRaData);
+    Serial.println("RSSI: " + String(LoRa.packetRssi()));
+    Serial.println("Snr: " + String(LoRa.packetSnr()));
+    Serial.println();
+    
+    // Dsiplay information
+    display.clearDisplay();
+    display.setCursor(0,0);
+    display.print("LORA RECEIVER");
+    display.setCursor(0,20);
+    display.print("Received packet:");
+    display.setCursor(0,30);
+    display.print(LoRaData);
+    display.setCursor(0,40);
+    display.print("RSSI:");
+    display.setCursor(30,40);
+    display.print(LoRa.packetRssi());
+    display.display();   
   }
 }

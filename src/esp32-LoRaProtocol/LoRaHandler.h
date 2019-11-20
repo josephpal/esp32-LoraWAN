@@ -105,7 +105,21 @@ public:
 	 *  @param
 	 *  @return
 	*/
-	void setTxPower(int powerdB);
+	void startReceiveListner();
+
+	/** ...
+	 *
+	 *  @param
+	 *  @return
+	*/
+	bool checkPackageLoss(byte currentPacketID);
+
+	/** ...
+	 *
+	 *  @param
+	 *  @return
+	*/
+	void setTxPower(int powerdBm);
 
 	/** set the device frequency property and at the same time the real frequency of the device itself
 	 *
@@ -133,6 +147,10 @@ public:
 	*/
 	void setFrequency(FrequencyBand band);
 
+	byte getLastPacketId();
+
+	void setLastPacketId(byte lastPacketId);
+
 private:
 	/*
 	 * 	outgoing: message from type String, which will be transmitted
@@ -152,6 +170,11 @@ private:
 	 *	LoRa WAN device frequency (class property!) (433, 866, 915 MHz)
 	 */
 	long frequency;
+
+	/*
+	 *	package ID will be saved after we receive a message,
+	 */
+	byte lastPacketID;
 
 };
 

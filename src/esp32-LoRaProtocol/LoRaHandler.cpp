@@ -7,6 +7,30 @@
 
 #include "LoRaHandler.h"
 
+extern LoRaHandler *lora;
+
+void receiveListner(void *param) {
+
+	bool runTask = true;
+
+	while(runTask) {
+		if ( lora == NULL ) {
+			Serial.println("[lora-task] error: LoRaHandler not defiened as global pointer.");
+			Serial.println("[lora-task] Can't receive messages. Aborted!");
+
+			runTask = false;
+			break;
+		} else {
+			// parse for a packet, and call onReceive with the result:
+			lora->onReceive(LoRa.parsePacket());
+		}
+
+		delay(10);
+	}
+
+	vTaskDelete(NULL);
+}
+
 LoRaHandler::LoRaHandler() {
 	if(!Serial) {
 		Serial.begin(115200);
@@ -18,6 +42,9 @@ LoRaHandler::LoRaHandler() {
 	setLocalAddress(0xAA);
 	setDestination(0xFF);
 	setFrequency(ASIA);
+
+	// init ID: packet IDs will go from 0...255
+	setLastPacketId(0);
 }
 
 LoRaHandler::~LoRaHandler() {
@@ -40,6 +67,9 @@ LoRaHandler::LoRaHandler(FrequencyBand band, byte localAddress, byte destination
 		Serial.println("[lora] error: localAddress and destination match!");
 		Serial.println("[lora] => changed destination address to broadcast: 0xFF.");
 	}
+
+	// init ID: packet IDs will go from 0...255
+	setLastPacketId(0);
 }
 
 void LoRaHandler::initialize(byte localAddress, byte destination) {
@@ -63,44 +93,99 @@ void LoRaHandler::initialize(byte localAddress, byte destination) {
 
 
 void LoRaHandler::send(String outgoing) {
+	Serial.println("[lora] sending message: " + outgoing);
 
+	LoRa.beginPacket();                   // start packet
+	LoRa.write(getDestination());         // add destination address
+	LoRa.write(getLocalAddress());        // add sender address
+	LoRa.write(msgCount);                 // add message ID
+	LoRa.write(outgoing.length());        // add payload length
+	LoRa.print(outgoing);                 // add payload
+	LoRa.endPacket();                     // finish packet and send it
+	msgCount++;                           // increment message ID
 }
 
 void LoRaHandler::onReceive(int packageSize) {
 	if (packageSize == 0) return;          	// if there's no packet, return
 
-	  // read packet header bytes:
-	  int recipient = LoRa.read();          // recipient address
-	  byte sender = LoRa.read();            // sender address
-	  byte incomingMsgId = LoRa.read();     // incoming msg ID
-	  byte incomingLength = LoRa.read();    // incoming msg length
+	// read packet header bytes:
+	int recipient = LoRa.read();          // recipient address
+	byte sender = LoRa.read();            // sender address
+	byte incomingMsgId = LoRa.read();     // incoming msg ID
+	byte incomingLength = LoRa.read();    // incoming msg length
 
-	  String incoming = "";
 
-	  while (LoRa.available()) {
-	    incoming += (char)LoRa.read();
-	  }
 
-	  if (incomingLength != incoming.length()) {   // check length for error
-	    Serial.println("error: message length does not match length");
-	    return;                             // skip rest of function
-	  }
+	// check of package loss
+	if ( checkPackageLoss(incomingMsgId) == true ) {
+		Serial.println("[lora] error: package loss detected!");
+		setLastPacketId(incomingMsgId);
 
-	  // if the recipient isn't this device or broadcast,
-	  if (recipient != localAddress && recipient != 0xFF) {
-	    Serial.println("This message is not for me.");
-	    return;                             // skip rest of function
-	  }
+		return;
+	} else {
+		setLastPacketId(incomingMsgId);
+	}
 
-	  // if message is for this device, or broadcast, print details:
-	  Serial.println("Received from: 0x" + String(sender, HEX));
-	  Serial.println("Sent to: 0x" + String(recipient, HEX));
-	  Serial.println("Message ID: " + String(incomingMsgId));
-	  Serial.println("Message length: " + String(incomingLength));
-	  Serial.println("Message: " + incoming);
-	  Serial.println("RSSI: " + String(LoRa.packetRssi()));
-	  Serial.println("Snr: " + String(LoRa.packetSnr()));
-	  Serial.println();
+	String incoming = "";
+
+	while (LoRa.available()) {
+		incoming += (char)LoRa.read();
+	}
+
+	// check length for error, if true, skip rest of function
+	if (incomingLength != incoming.length()) {
+		Serial.println("[lora] error: message length does not match length");
+		return;
+	}
+
+	// if the recipient isn't this device or broadcast, if true, skip rest of function
+	if (recipient != localAddress && recipient != 0xFF) {
+		Serial.println("[lora] warning: This message is not for me.");
+		return;
+	}
+
+	// if message is for this device, or broadcast, print details:
+	Serial.println("[lora] Received from: 0x" + String(sender, HEX));
+	Serial.println("[lora] Sent to: 0x" + String(recipient, HEX));
+	Serial.println("[lora] Message ID: " + String(incomingMsgId));
+	Serial.println("[lora] Message length: " + String(incomingLength));
+	Serial.println("[lora] Message: " + incoming);
+	Serial.println("[lora] RSSI: " + String(LoRa.packetRssi()));
+	Serial.println("[lora] Snr: " + String(LoRa.packetSnr()));
+	Serial.println();
+}
+
+void LoRaHandler::startReceiveListner() {
+	Serial.println("[lora] Starting receiveListner for incomming messages ...");
+
+	xTaskCreate(
+		receiveListner,         /* Task function. */
+		"receiveListener",  	/* String with name of task. */
+		10000,            		/* Stack size in bytes. */
+		NULL,     				/* Parameter passed as input of the task */
+		1,                		/* Priority of the task. */
+		NULL);            		/* Task handle. */
+
+}
+
+bool LoRaHandler::checkPackageLoss(byte currentPacketID) {
+	bool returnCondition;
+
+	int cID = (int)currentPacketID;
+	int lID = (int)getLastPacketId();
+
+	if( (lID + 1) != cID) {
+		Serial.println("[lora] warning: package loss! Expected msgID: " + String(lID + 1)
+							+ " but received msgID: " + String(cID) + "\n");
+		returnCondition = true;
+	} else if ( cID == lID ) {
+		Serial.println("[lora] warning: out of sync! Received similar msgID's: " +  String(cID) + "\n");
+		returnCondition = true;
+	} else {
+		returnCondition = false;
+	}
+
+	return returnCondition;
 }
 
 void LoRaHandler::setTxPower(int powerdB) {
@@ -152,4 +237,12 @@ void LoRaHandler::setFrequency(FrequencyBand band) {
 			this->frequency = 433E6;
 			break;
 	}
+}
+
+byte LoRaHandler::getLastPacketId() {
+	return lastPacketID;
+}
+
+void LoRaHandler::setLastPacketId(byte lastPacketId) {
+	lastPacketID = lastPacketId;
 }
