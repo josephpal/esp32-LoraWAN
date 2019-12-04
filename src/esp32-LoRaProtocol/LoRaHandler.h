@@ -32,30 +32,49 @@
 #define LORAHANDLER_H_
 
 #include "Arduino.h"
+#include "Cipher.h"
+#include "Mutex.h"
+#include "OLEDDisplay.h"
+
 #include <SPI.h>
 #include <LoRa.h>
 
 /*
  *	default definition of the pins used by the LoRa transceiver module
- *	model:
- */
+ *	model (TTGO):
+*/
 #define SCK 5
 #define MISO 19
 #define MOSI 27
 #define SS 18
-#define RST 14
-#define DIO0 26
+#define SS_LORA 18
+#define RST_LORA 14
+#define DIO0_LORA 26
 
 /*
  * 	default device frequency (433MHz)
  * 	can be changed during the call of the constructor or initialize(...)
- */
-
+*/
 enum FrequencyBand {
 	ASIA,
 	EUROPE,
 	NORTHAMERICA
 };
+
+/*
+ * 	enum to represent the received package status after reading and saving
+ * 	the header information
+*/
+enum PackageHeader {
+	PKG_EMPTY,
+	PKG_MSGLENGTH_MISSMATCH,
+	PKG_WRONG_RECIPIENT,
+	PKG_LOSS,
+	PKG_CONFIRMATION,
+	PKG_NEWMESSAGE,
+	PKG_UNKOWN
+};
+
 
 class LoRaHandler {
 public:
@@ -84,6 +103,34 @@ public:
 	*/
 	void initialize(byte localAddress, byte destination);
 
+	/** ...
+	 *
+	 *  @param
+	 *  @return
+	*/
+	void initEncryption(char * key);
+
+	/** ...
+	 *
+	 *  @param
+	 *  @return
+	*/
+	void setSPIPins(int pinSCK, int pinMISO, int pinMOSI, int pinSS);
+
+	/** ...
+	 *
+	 *  @param
+	 *  @return
+	*/
+	void setLORAPins(int pinSS_LORA, int pinRST_LORA, int pinDIO0_LORA);
+
+	/**	...
+	 *
+	 *	@param	...
+	 *	@return	---
+	*/
+	void setupDefaultSettings();
+
 	/* ================================ device functions ================================ */
 
 	/** ...
@@ -98,7 +145,49 @@ public:
 	 *  @param
 	 *  @return
 	*/
-	void onReceive(int packageSize);
+	void send(String outgoing, byte destination);
+
+	/** ...
+	 *
+	 *  @param
+	 *  @return
+	*/
+	void sendConfirmation(byte destination);
+
+	/** ...
+	 *
+	 *  @param
+	 *  @return
+	*/
+	void sendPackage(String outgoing, byte destination);
+
+	/** ...
+	 *
+	 *  @param
+	 *  @return
+	*/
+	bool onReceive(int packageSize);
+
+	/** ...
+	 *
+	 *  @param	...
+	 *  @return	---
+	*/
+	PackageHeader readPackageHeader(int packageSize);
+
+	/** ...
+	 *
+	 *  @param	...
+	 *  @return	---
+	*/
+	void clearPackageHeader();
+
+	/**	...
+	 *
+	 * 	@param	...
+	 * 	@return	---
+	 */
+	void displayPackageHeader();
 
 	/** ...
 	 *
@@ -116,6 +205,13 @@ public:
 
 	/** ...
 	 *
+	 *  @param	...
+	 *  @return	---
+	*/
+	void updateMsgStatus(String msgStatus, bool msgConfirmed);
+
+	/** ...
+	 *
 	 *  @param
 	 *  @return
 	*/
@@ -123,7 +219,7 @@ public:
 
 	/** set the device frequency property and at the same time the real frequency of the device itself
 	 *
-	 *  @param
+	 *  @param	433E6, 868E6, 915E6
 	 *  @return	---
 	*/
 	void setFrequencyBand(FrequencyBand band);
@@ -134,9 +230,11 @@ public:
 
 	void setDestination(byte destination);
 
+
 	byte getLocalAddress();
 
 	void setLocalAddress(byte localAddress);
+
 
 	long getFrequency();
 
@@ -147,15 +245,67 @@ public:
 	*/
 	void setFrequency(FrequencyBand band);
 
+
 	byte getLastPacketId();
 
 	void setLastPacketId(byte lastPacketId);
 
+
+	bool isActivateEncryption();
+
+	void setActivateEncryption(bool activateEncryption);
+
+
+	String getReceivedMessage();
+
+	void setReceivedMessage(String receivedMessage);
+
+
+	bool isMsgConfirmed();
+
+	void setMsgConfirmed(bool msgConfirmed);
+
+
+	String& getMsgStatus();
+
+	void setMsgStatus(String msgStatus);
+
+
+	void setSenderAddress(byte address);
+
+	byte getSenderAddress();
+
 private:
 	/*
-	 * 	outgoing: message from type String, which will be transmitted
+	 * 	receivedMessage: message from type String, which is received
+	 * 	msgStatus: contains the current status of a transmitted package
+	 * 		-> receivedConfirmation if we received from our communication partner a confirmation
+	 * 		-> timedOut if we wont receive a confirmation in less than ~2 seconds
+	 *
+	 * 	If we receive a new message, the received header with all its information will be saved in
+	 * 	the package[] template. The string array package[] will contain the following content:
+	 *
+	 * 		--------------------- MSG HEADER ---------------------
+	 *
+	 * 			package[0]	->	destination address
+	 * 			package[1]	->	sender address
+	 * 			package[2]	->	message ID
+	 * 			package[3]	->	payload length
+	 * 			package[4]	->	payload
+	 * 			package[5]	->	RSSI
+	 * 			package[6]	->	SNR
+	 *
 	 */
-	String outgoing;
+	String receivedMessage;
+	String msgStatus;
+	String package[7];
+
+	/*
+	 * 	default mutex to handle bidirectional mode of the LoRa device, if you want to send,
+	 * 	the receiver thread has to wait, and also the opposite way
+	 */
+	Mutex receiveMutex, sendMutex;
+	bool msgConfirmed;
 
 	/*
 	 * 	msgCount:		count of outgoing messages; amount of message, which are already transmitted
@@ -165,6 +315,7 @@ private:
 	byte msgCount;				// count of outgoing messages
 	byte localAddress;			// address of this device
 	byte destination;			// destination to send to
+	byte senderAddress;			// last saved sender address from which we received the last message
 
 	/*
 	 *	LoRa WAN device frequency (class property!) (433, 866, 915 MHz)
@@ -176,6 +327,25 @@ private:
 	 */
 	byte lastPacketID;
 
+	/*
+	 * 	device configuration
+	 * 	-> SCK, MISO, MOSI, SS (SPI)
+	 * 	-> SS_LORA, RST_LORA, DIO0_LORA
+	 */
+	int pinSCK, pinMISO, pinMOSI, pinSS, pinSS_LORA, pinRST_LORA, pinDIO0_LORA;
+
+	/*
+	 *  encryption class
+	 */
+	Cipher * cipher;
+
+	bool activateEncryption;
+
+	/*
+	 * 	QueueHandle_t object to communicate between the threads (receive package confirmation)
+	 */
+	QueueHandle_t *queue;
+	int queueSize;
 };
 
 #endif /* LORAHANDLER_H_ */
