@@ -71,6 +71,7 @@ enum PackageHeader {
 	PKG_WRONG_RECIPIENT,
 	PKG_LOSS,
 	PKG_CONFIRMATION,
+	PKG_RESENT,
 	PKG_NEWMESSAGE,
 	PKG_UNKOWN
 };
@@ -153,6 +154,13 @@ public:
 	 *  @return
 	*/
 	void sendConfirmation(byte destination);
+
+	/** ...
+	 *
+	 *  @param
+	 *  @return
+	*/
+	void resentRequest(byte destination);
 
 	/** ...
 	 *
@@ -265,6 +273,10 @@ public:
 
 	void setMsgConfirmed(bool msgConfirmed);
 
+	bool isMsgResent();
+
+	void setMsgResent(bool msgResent);
+
 
 	String& getMsgStatus();
 
@@ -296,7 +308,7 @@ private:
 	 * 			package[6]	->	SNR
 	 *
 	 */
-	String receivedMessage;
+	String receivedMessage, lastMessage;
 	String msgStatus;
 	String package[7];
 
@@ -304,8 +316,8 @@ private:
 	 * 	default mutex to handle bidirectional mode of the LoRa device, if you want to send,
 	 * 	the receiver thread has to wait, and also the opposite way
 	 */
-	Mutex receiveMutex, sendMutex;
-	bool msgConfirmed;
+	Mutex receiveMutex, sendMutex, msgMutex;
+	bool msgConfirmed, msgResent;
 
 	/*
 	 * 	msgCount:		count of outgoing messages; amount of message, which are already transmitted

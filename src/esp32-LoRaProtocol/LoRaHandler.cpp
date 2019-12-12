@@ -24,9 +24,11 @@ void receiveListner(void *param) {
 		} else {
 			// parse for a packet, and call onReceive with the result, if true, a package is received:
 			if( lora->onReceive(LoRa.parsePacket()) ) {
-				Serial.println("[lora-task] received message: => " + lora->getReceivedMessage() + "\n");
+				String tmp = lora->getReceivedMessage();
+				Serial.println("[lora-task] received message: => " + tmp + "\n");
 
-				oled->OLEDfloattext(lora->getReceivedMessage(), 1);
+				oled->OLEDfloattext(String("[") + String(lora->getLastPacketId()) + String("] ")
+						+ tmp, 1);
 			}
 		}
 
@@ -40,7 +42,7 @@ void confirmationListener(void *param) {
 	bool runTask = true;
 	int timeOutCounter = 0;
 
-	Serial.println("[lora-task] waiting for package confirmation ...");
+	// Serial.println("[lora-task] waiting for package confirmation ...");
 
 	while(runTask) {
 		if ( lora == NULL ) {
@@ -56,11 +58,19 @@ void confirmationListener(void *param) {
 			if( lora->isMsgConfirmed() == true ) {
 				runTask = false;
 				lora->updateMsgStatus("receivedConfirmation", false);
+				break;
 			}
 
-			if( timeOutCounter >= 200 ) {
+			if( lora->isMsgResent() == true ) {
+				runTask = false;
+				lora->updateMsgStatus("resent", false);
+				break;
+			}
+
+			if( timeOutCounter >= 300 ) {
 				runTask = false;
 				lora->updateMsgStatus("timedOut", false);
+				break;
 			}
 		}
 
@@ -158,6 +168,7 @@ void LoRaHandler::setupDefaultSettings() {
 
 	/* default values for the properties of the class */
 	receivedMessage = "";
+	lastMessage = "";
 	msgStatus = "";
 	msgCount = 0;
 
@@ -165,7 +176,9 @@ void LoRaHandler::setupDefaultSettings() {
 
 	sendMutex.unlock();
 	receiveMutex.unlock();
+	msgMutex.unlock();
 	msgConfirmed = false;
+	msgResent = false;
 
 	/* lora device settings */
 	localAddress = 0xAA;
@@ -182,7 +195,7 @@ void LoRaHandler::setupDefaultSettings() {
 
 	/* Queue handle object to communicate between send and receive task */
 	queue = new QueueHandle_t();
-	this->queueSize = 10;
+	this->queueSize = 64;
 
 	*queue = xQueueCreate( queueSize, sizeof( String ) );
 }
@@ -190,10 +203,16 @@ void LoRaHandler::setupDefaultSettings() {
 /* ================================ device functions ================================ */
 
 void LoRaHandler::send(String outgoing) {
+	/* save current outgoing msg as last transmitted msg */
+	lastMessage = outgoing;
+
 	send(outgoing, getDestination());
 }
 
 void LoRaHandler::send(String outgoing, byte destination) {
+	/* save current outgoing msg as last transmitted msg */
+	lastMessage = outgoing;
+
 	/* send message */
 	sendPackage(outgoing, destination);
 
@@ -207,16 +226,20 @@ void LoRaHandler::send(String outgoing, byte destination) {
 						NULL,       			/* Task handle. */
 						0);  					/* Core where the task should run */
 
-	/* wait until we received a confirmation or a timeout */
+	/* wait until we received a confirmation, a resent or a timeout */
 	xQueueReceive(*queue, &msgStatus, portMAX_DELAY);
 
-	if( msgStatus == "receivedConfirmation" ) {
+	if( getMsgStatus() == "receivedConfirmation" ) {
 		Serial.println("[lora] msg confirmation received. Allowed to send a new message now.\n");
-	} else if ( msgStatus == "timedOut" ) {
-		Serial.println("[lora] error: msg confirmation timeout.\n");
-	}
+	} else if( getMsgStatus() == "resent" ) {
+		Serial.println("[lora] last msg to 0x" + String(getSenderAddress(), HEX) + " not transmitted successfully. Received resent request.\n");
 
-	delay(1000);
+		/* resent package */
+		sendPackage(String("[r] " + lastMessage), getSenderAddress());
+	} else if ( getMsgStatus() == "timedOut" ) {
+		Serial.println("[lora] error: msg confirmation timeout.\n");
+		delay(2000);
+	}
 }
 
 void LoRaHandler::sendConfirmation(byte destination) {
@@ -224,14 +247,20 @@ void LoRaHandler::sendConfirmation(byte destination) {
 	sendPackage("received", destination);
 }
 
+void LoRaHandler::resentRequest(byte destination) {
+	/* resent request */
+	sendPackage("resent", destination);
+}
+
 void LoRaHandler::sendPackage(String outgoing, byte destination) {
 	sendMutex.lock();
 
 	if( isActivateEncryption() ) {
+		Serial.println("[lora] sending encrypted message [id: " + String(msgCount) + "]: " + outgoing + " -> "
+				+ cipher->encryptString(outgoing) + " to 0x" + String(destination, HEX));
 		outgoing = cipher->encryptString(outgoing);
-		Serial.println("[lora] sending encrypted message: " + outgoing + " to 0x" + String(destination, HEX));
 	} else {
-		Serial.println("[lora] sending message: " + outgoing + " to 0x" + String(destination, HEX));
+		Serial.println("[lora] sending message: [id: " + String(msgCount) + "]: " + outgoing + " to 0x" + String(destination, HEX));
 	}
 
 	LoRa.beginPacket();                   // start packet
@@ -241,7 +270,7 @@ void LoRaHandler::sendPackage(String outgoing, byte destination) {
 	LoRa.write(outgoing.length());        // add payload length
 	LoRa.print(outgoing);                 // add payload
 	LoRa.endPacket();                     // finish packet and send it
-	msgCount++;                           // increment message ID
+	msgCount++;                     	  // increment message ID
 
 	sendMutex.unlock();
 }
@@ -266,7 +295,11 @@ bool LoRaHandler::onReceive(int packageSize) {
 			break;
 
 		case PKG_LOSS:
-			Serial.println("[lora] error: package loss detected!\n");
+			Serial.println("[lora] error: package loss detected! Request last package!");
+
+			/* request resent last package */
+			resentRequest(getSenderAddress());
+
 			break;
 
 		case PKG_CONFIRMATION:
@@ -275,6 +308,11 @@ bool LoRaHandler::onReceive(int packageSize) {
 			returnCondition = true;
 			break;
 
+		case PKG_RESENT:
+			msgResent = true;
+
+			returnCondition = true;
+			break;
 		case PKG_NEWMESSAGE:
 			/* display received package header containing our message */
 			displayPackageHeader();
@@ -308,6 +346,9 @@ PackageHeader LoRaHandler::readPackageHeader(int packageSize) {
 
 		String incoming = "";
 
+		/* set sender address */
+		setSenderAddress(sender);
+
 		while (LoRa.available()) {
 			incoming += (char)LoRa.read();
 		}
@@ -323,7 +364,7 @@ PackageHeader LoRaHandler::readPackageHeader(int packageSize) {
 		}
 
 		if ( checkPackageLoss(incomingMsgId) == true ) {
-			/* check of package loss */
+			/* package loss detected ->  */
 			setLastPacketId(incomingMsgId);
 
 			return PKG_LOSS;
@@ -342,7 +383,6 @@ PackageHeader LoRaHandler::readPackageHeader(int packageSize) {
 		for (int i = 0; i < (sizeof(package) / sizeof(package[0])); ++i) {
 			switch (i) {
 				case 0:
-					setSenderAddress(sender);
 					package[0] = String(getSenderAddress(), HEX);
 					break;
 
@@ -375,6 +415,16 @@ PackageHeader LoRaHandler::readPackageHeader(int packageSize) {
 					break;
 			}
 		}
+	}
+
+	/* received a confirmation package */
+	if( getReceivedMessage() == "received" ) {
+		return PKG_CONFIRMATION;
+	}
+
+	/* received a resent package request */
+	if( getReceivedMessage() == "resent" ) {
+		return PKG_RESENT;
 	}
 
 	return PKG_NEWMESSAGE;
@@ -434,12 +484,24 @@ bool LoRaHandler::checkPackageLoss(byte currentPacketID) {
 	return returnCondition;
 }
 
-void LoRaHandler::updateMsgStatus(String msgStatus, bool msgConfirmed) {
+void LoRaHandler::updateMsgStatus(String msgStatus, bool status) {
 	this->msgStatus = msgStatus;
-	this->msgConfirmed = msgConfirmed;
+
+	if( msgStatus == "receivedConfirmation") {
+		this->msgConfirmed = status;
+	}
+
+	if( msgStatus == "resent") {
+		this->msgResent = status;
+	}
+
+	if( msgStatus == "timedOut" ) {
+		this->msgConfirmed = status;
+		this->msgResent = status;
+	}
 
 	/* package confirmation received or timeout */
-	xQueueSend(*queue, &msgStatus, portMAX_DELAY);
+	xQueueSend(*queue, &(this->msgStatus), portMAX_DELAY);
 }
 
 void LoRaHandler::setTxPower(int powerdB) {
@@ -518,11 +580,21 @@ void LoRaHandler::setActivateEncryption(bool activateEncryption) {
 }
 
 String LoRaHandler::getReceivedMessage() {
-	return receivedMessage;
+	msgMutex.lock();
+
+	String retMsg = receivedMessage;
+
+	msgMutex.unlock();
+
+	return retMsg;
 }
 
 void LoRaHandler::setReceivedMessage(String receivedMessage) {
+	msgMutex.lock();
+
 	this->receivedMessage = receivedMessage;
+
+	msgMutex.unlock();
 }
 
 bool LoRaHandler::isMsgConfirmed() {
@@ -531,6 +603,14 @@ bool LoRaHandler::isMsgConfirmed() {
 
 void LoRaHandler::setMsgConfirmed(bool msgConfirmed) {
 	this->msgConfirmed = msgConfirmed;
+}
+
+bool LoRaHandler::isMsgResent() {
+	return msgResent;
+}
+
+void LoRaHandler::setMsgResent(bool msgResent) {
+	this->msgResent = msgResent;
 }
 
 String & LoRaHandler::getMsgStatus() {
