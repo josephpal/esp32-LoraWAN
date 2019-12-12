@@ -22,6 +22,8 @@ LoraWAN is a open, non encrypted data transmission protocoll, which uses *unlice
 
 Currently, we are using the LILYGO® TTGO LORA SX1278 ESP32 module, an ESP32 micrcontroller with an integrated LoRAWAN chip and a additional OLED display. 
 
+<p align="center"><img width="30%" src="https://imgaz1.staticbg.com/thumb/large/oaupload/ser1/banggood/images/30/2C/bee28b47-7aac-43bd-bc75-8f99fcf2b043.JPG"></p>
+
 ### Hardware description
 
 Our board consits of the following components:
