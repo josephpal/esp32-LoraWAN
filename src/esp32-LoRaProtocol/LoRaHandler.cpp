@@ -42,8 +42,6 @@ void confirmationListener(void *param) {
 	bool runTask = true;
 	int timeOutCounter = 0;
 
-	// Serial.println("[lora-task] waiting for package confirmation ...");
-
 	while(runTask) {
 		if ( lora == NULL ) {
 			Serial.println("[lora-task] error: LoRaHandler not defiened as global pointer.");
@@ -57,19 +55,19 @@ void confirmationListener(void *param) {
 
 			if( lora->isMsgConfirmed() == true ) {
 				runTask = false;
-				lora->updateMsgStatus("receivedConfirmation", false);
+				lora->updateMsgStatus(MSG_CONFIRMED, false);
 				break;
 			}
 
 			if( lora->isMsgResent() == true ) {
 				runTask = false;
-				lora->updateMsgStatus("resent", false);
+				lora->updateMsgStatus(MSG_RESENT_REQUEST, false);
 				break;
 			}
 
 			if( timeOutCounter >= 300 ) {
 				runTask = false;
-				lora->updateMsgStatus("timedOut", false);
+				lora->updateMsgStatus(MSG_TIMED_OUT, false);
 				break;
 			}
 		}
@@ -169,7 +167,7 @@ void LoRaHandler::setupDefaultSettings() {
 	/* default values for the properties of the class */
 	receivedMessage = "";
 	lastMessage = "";
-	msgStatus = "";
+	msgStatus = MSG_UNKNOWN;
 	msgCount = 0;
 
 	clearPackageHeader();
@@ -197,20 +195,18 @@ void LoRaHandler::setupDefaultSettings() {
 	queue = new QueueHandle_t();
 	this->queueSize = 64;
 
-	*queue = xQueueCreate( queueSize, sizeof( String ) );
+	*queue = xQueueCreate( queueSize, sizeof( MsgStatus ) );
 }
 
 /* ================================ device functions ================================ */
 
 void LoRaHandler::send(String outgoing) {
-	/* save current outgoing msg as last transmitted msg */
-	lastMessage = outgoing;
-
 	send(outgoing, getDestination());
 }
 
 void LoRaHandler::send(String outgoing, byte destination) {
 	/* save current outgoing msg as last transmitted msg */
+	lastMessage  = "";
 	lastMessage = outgoing;
 
 	/* send message */
@@ -229,16 +225,22 @@ void LoRaHandler::send(String outgoing, byte destination) {
 	/* wait until we received a confirmation, a resent or a timeout */
 	xQueueReceive(*queue, &msgStatus, portMAX_DELAY);
 
-	if( getMsgStatus() == "receivedConfirmation" ) {
+	if( getMsgStatus() == MSG_CONFIRMED ) {
 		Serial.println("[lora] msg confirmation received. Allowed to send a new message now.\n");
-	} else if( getMsgStatus() == "resent" ) {
+		return;
+	} else if( getMsgStatus() == MSG_RESENT_REQUEST ) {
 		Serial.println("[lora] last msg to 0x" + String(getSenderAddress(), HEX) + " not transmitted successfully. Received resent request.\n");
 
-		/* resent package */
-		sendPackage(String("[r] " + lastMessage), getSenderAddress());
-	} else if ( getMsgStatus() == "timedOut" ) {
+		/* resent package and wait for confirmation */
+		send(lastMessage, getSenderAddress());
+
+		return;
+	} else if ( getMsgStatus() == MSG_TIMED_OUT ) {
 		Serial.println("[lora] error: msg confirmation timeout.\n");
-		delay(2000);
+		/* TODO: try to resent again + resent counter (only try 3 times?) */
+
+		delay(500);
+		return;
 	}
 }
 
@@ -255,22 +257,32 @@ void LoRaHandler::resentRequest(byte destination) {
 void LoRaHandler::sendPackage(String outgoing, byte destination) {
 	sendMutex.lock();
 
+	String msg = "";
+
+	if( getMsgStatus() == MSG_RESENT_REQUEST ) {
+		outgoing = "[r] " + outgoing;
+	}
+
+	int outgoingLength = outgoing.length();
+
 	if( isActivateEncryption() ) {
 		Serial.println("[lora] sending encrypted message [id: " + String(msgCount) + "]: " + outgoing + " -> "
 				+ cipher->encryptString(outgoing) + " to 0x" + String(destination, HEX));
-		outgoing = cipher->encryptString(outgoing);
+		msg = cipher->encryptString(outgoing);
 	} else {
 		Serial.println("[lora] sending message: [id: " + String(msgCount) + "]: " + outgoing + " to 0x" + String(destination, HEX));
+		msg = outgoing;
 	}
 
 	LoRa.beginPacket();                   // start packet
 	LoRa.write(destination);         	  // add destination address
 	LoRa.write(getLocalAddress());        // add sender address
 	LoRa.write(msgCount);                 // add message ID
-	LoRa.write(outgoing.length());        // add payload length
-	LoRa.print(outgoing);                 // add payload
+	LoRa.write(outgoingLength);           // add payload length (unencrypted)
+	LoRa.print(msg);                      // add payload
 	LoRa.endPacket();                     // finish packet and send it
-	msgCount++;                     	  // increment message ID
+	msgCount++;                           // increment message ID
+
 
 	sendMutex.unlock();
 }
@@ -287,6 +299,13 @@ bool LoRaHandler::onReceive(int packageSize) {
 
 		case PKG_MSGLENGTH_MISSMATCH:
 			Serial.println("[lora] error: message length does not match length in header.");
+			/* package transmission problem or encryption of transmitted msg wrong */
+
+			msgResent = true;
+
+			/* request resent last package */
+			resentRequest(getSenderAddress());
+
 			returnCondition = false;
 			break;
 
@@ -353,15 +372,7 @@ PackageHeader LoRaHandler::readPackageHeader(int packageSize) {
 			incoming += (char)LoRa.read();
 		}
 
-		if (incomingLength != incoming.length()) {
-			/* check length for error */
-			return PKG_MSGLENGTH_MISSMATCH;
-		}
-
-		if (recipient != localAddress && recipient != 0xFF) {
-			/* if the recipient isn't this device or broadcast address */
-			return PKG_WRONG_RECIPIENT;
-		}
+		/* ----------------------------------- synchronization part ----------------------------------- */
 
 		if ( checkPackageLoss(incomingMsgId) == true ) {
 			/* package loss detected ->  */
@@ -372,11 +383,26 @@ PackageHeader LoRaHandler::readPackageHeader(int packageSize) {
 			setLastPacketId(incomingMsgId);
 		}
 
+		/* -------------------------------------------------------------------------------------------- */
+
 		/* is it necessary to decrypt the received message in the package? */
 		if( isActivateEncryption() ) {
 			setReceivedMessage(cipher->decryptString(incoming));
 		} else {
 			setReceivedMessage(incoming);
+		}
+
+		if (incomingLength != getReceivedMessage().length() - 1) {
+			/* check length for error */
+			Serial.println("[lora ]incomingLength: " + String(incomingLength) + "; msg length: " + String(getReceivedMessage().length()));
+			Serial.println("[lora ]received msg: " + getReceivedMessage() );
+
+			return PKG_MSGLENGTH_MISSMATCH;
+		}
+
+		if (recipient != localAddress && recipient != 0xFF) {
+			/* if the recipient isn't this device or broadcast address */
+			return PKG_WRONG_RECIPIENT;
 		}
 
 		/* write received information in the header template */
@@ -484,18 +510,18 @@ bool LoRaHandler::checkPackageLoss(byte currentPacketID) {
 	return returnCondition;
 }
 
-void LoRaHandler::updateMsgStatus(String msgStatus, bool status) {
-	this->msgStatus = msgStatus;
+void LoRaHandler::updateMsgStatus(MsgStatus mStatus, bool status) {
+	this->msgStatus = mStatus;
 
-	if( msgStatus == "receivedConfirmation") {
+	if( mStatus == MSG_CONFIRMED ) {
 		this->msgConfirmed = status;
 	}
 
-	if( msgStatus == "resent") {
+	if( mStatus == MSG_RESENT_REQUEST ) {
 		this->msgResent = status;
 	}
 
-	if( msgStatus == "timedOut" ) {
+	if( mStatus == MSG_TIMED_OUT ) {
 		this->msgConfirmed = status;
 		this->msgResent = status;
 	}
@@ -613,11 +639,11 @@ void LoRaHandler::setMsgResent(bool msgResent) {
 	this->msgResent = msgResent;
 }
 
-String & LoRaHandler::getMsgStatus() {
+MsgStatus & LoRaHandler::getMsgStatus() {
 	return msgStatus;
 }
 
-void LoRaHandler::setMsgStatus(String msgStatus) {
+void LoRaHandler::setMsgStatus(MsgStatus mStatus) {
 	this->msgStatus = msgStatus;
 }
 

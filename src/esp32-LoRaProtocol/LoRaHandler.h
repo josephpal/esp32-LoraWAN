@@ -62,7 +62,7 @@ enum FrequencyBand {
 };
 
 /*
- * 	enum to represent the received package status after reading and saving
+ * 	enumeration to represent the received package status after reading and saving
  * 	the header information
 */
 enum PackageHeader {
@@ -76,35 +76,56 @@ enum PackageHeader {
 	PKG_UNKOWN
 };
 
+/*
+ * 	enumeration to represent the sent package status after receiving
+ * 	a timeout, a confirmation or a resent request
+*/
+enum MsgStatus {
+	MSG_CONFIRMED,
+	MSG_TIMED_OUT,
+	MSG_RESENT_REQUEST,
+	MSG_UNKNOWN
+};
 
 class LoRaHandler {
 public:
 
 	/* ================================= device setup ================================== */
 
-	/** ...
+	/** default constructor, he will set all default settings by calling the function
+	 *  setupDefaultSettings() and the constructor will clear the class properties.
+	 * 	For the LoRa device, he will use pin numbers for the TTGO ESP32 LoRa device. If you want to change
+	 * 	them , use the overloaded constructor or the functions setSPIPins() or setLORAPins(). After that
+	 * 	call initialize() to start the LoRa device with the preset settings.
 	 *
-	 *  @param
-	 *  @return
+	 *  @param	---
+	 *  @return	---
 	*/
 	LoRaHandler();
 	~LoRaHandler();
 
-	/** overloaded constructor
+	/** overloaded constructor to set the frequency band by the help of a enumeration. It can be also used to set the
+	 * 	default device address as well as the destination address for the communication partner. All other settings will be
+	 * 	used by calling the function setupDefaultSettings().
 	 *
-	 *  @param
-	 *  @return
+	 *  @param	frequency on which the LoRa module should run (ASIA, EUROPE, NORTHAMERICA)
+	 *  @param	local device address in byte (e.g. 0xAA)
+	 *  @param	destination device address in byte (e.g. 0xBB). If local == destination, destination will be set to 0xFF (broadcast)
+	 *  @return	---
 	*/
 	LoRaHandler(FrequencyBand band, byte localAddress, byte destination);
 
-	/** ...
+	/** Set the default device address as well as the destination address for the communication partner. This function will also
+	 * 	start the SPI communication with the LoRa device and will initialize it.
 	 *
-	 *  @param
-	 *  @return
+	 * 	@param	local device address in byte (e.g. 0xAA)
+	 *  @param	destination device address in byte (e.g. 0xBB). If local == destination, destination will be set to 0xFF (broadcast)
+	 *  @return	---
 	*/
 	void initialize(byte localAddress, byte destination);
 
-	/** ...
+	/** If we want to encrypt our transmission (only the message itself, not the whole payload header), we can define a encryption
+	 * 	key to achieve that aim. The receiver must know this key as well to decrypt the received message.
 	 *
 	 *  @param
 	 *  @return
@@ -216,7 +237,7 @@ public:
 	 *  @param	...
 	 *  @return	---
 	*/
-	void updateMsgStatus(String msgStatus, bool msgConfirmed);
+	void updateMsgStatus(MsgStatus mStatus, bool msgConfirmed);
 
 	/** ...
 	 *
@@ -278,9 +299,9 @@ public:
 	void setMsgResent(bool msgResent);
 
 
-	String& getMsgStatus();
+	MsgStatus& getMsgStatus();
 
-	void setMsgStatus(String msgStatus);
+	void setMsgStatus(MsgStatus mStatus);
 
 
 	void setSenderAddress(byte address);
@@ -309,7 +330,10 @@ private:
 	 *
 	 */
 	String receivedMessage, lastMessage;
-	String msgStatus;
+
+	//String msgStatus;
+	MsgStatus msgStatus;
+
 	String package[7];
 
 	/*
@@ -325,7 +349,7 @@ private:
 	 * 	destination:	address of the communication partner, like 0xBB, default: 0xFF (broadcast address)
 	 */
 	byte msgCount;				// count of outgoing messages
-	byte localAddress;			// address of this device
+	byte localAddress;			// address of this devMsgStatusice
 	byte destination;			// destination to send to
 	byte senderAddress;			// last saved sender address from which we received the last message
 

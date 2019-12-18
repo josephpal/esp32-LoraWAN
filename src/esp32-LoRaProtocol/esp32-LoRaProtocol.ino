@@ -14,7 +14,7 @@
 #include "LoRaHandler.h"
 #include "OLEDDisplay.h"
 
-#define RECEIVER
+#define SENDER
 
 /*
  * 	#ifdef SENDER_ESP32
@@ -32,6 +32,7 @@
  */
 
 LoRaHandler *lora;
+char *encryptionKey = "abcdefghijklmnop";
 
 void setup() {
 	// initialize serial monitor
@@ -49,7 +50,7 @@ void setup() {
 
 	lora->setTxPower(17);
 
-	lora->initEncryption("abcdefghijklmnop");
+	lora->initEncryption(encryptionKey);
 
 	lora->startReceiveListner();
 }
