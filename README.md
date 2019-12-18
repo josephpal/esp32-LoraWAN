@@ -85,7 +85,11 @@ So we have two aims for this project. First of all, we have to develop two class
 <a name="usage"></a>
 ## Usage
 
-*TODO*: Example call of our created class, description what is necessary and which parameters are passed. Explanation of the thread communication.
+<p align="center"><img width="90%" src="documentation/send-receive.png"></img></p>
+
+To get started with our created class, we have to include the ```LoRaHandler.h``` header file in our arduino project. Now its necessary to declare a global pointer of the LoRaHandler class, so every thread which will be instantiated has access to the member functions.
+
+If we want to encrypt our transmission, we have to define a cipher key. However, it is mandatory that both communication partners have the same key stored, so that they are able to encrypt and decrypt the sent and received packages due to the fact that we are using a [symetric encryption]().
 
 <a name="references"></a>
 ## References
