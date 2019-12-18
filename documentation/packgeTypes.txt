@@ -1,0 +1,17 @@
+package header cases:
+
+1) EMPTY: package empty
+
+2) MSGLENGTH_MISSMATCH: message length doesnt match with length in the header of the package
+
+3) WRONG_RECIPIENT: message is not dedicated to me (not a broadcast message and recipient != device address)
+
+4) BROADCAST_MSG: broadcast message (0xFF call)
+
+5) PRV_MSG: private message (local address call)
+
+6) PKG_LOSS: package loss -> msg ID dosent fit with the last saved ID
+
+7) PKG_CONFIRMATION: confirmation package
+
+8) PKG_NEWMESSAGE: received a new message
