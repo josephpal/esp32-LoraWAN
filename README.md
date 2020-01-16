@@ -204,7 +204,7 @@ Still, this implementation of a LoRaWAN protocol is in a early state there is st
 - so far, start a transmission and communicate bidirectional is not handled properly. A method to listen to the channel as well as asking for starting a transmission is mandatory to guarantee a stable transmission.
 - a resent request of a broken resent package will result into a infinitely closed loop as mentioned for the confirmation case (confirm the confirmation of the confirmation package ...).
 - packages which timed out should be resent form the sender.
-- optimizing the encryption process. Sometimes the decrypted result doesn't match with the transmitted payload length. We were able to trace back the issues to the sender, it seems that there is a problem during encrypting and transmitting.
+- optimizing the encryption process. Sometimes the decrypted result doesn't match with the transmitted payload length. We were able to trace back the issue to the sender, it seems that sometimes there is a problem during encrypting and transmitting.
 
 <a name="references"></a>
 ## References
