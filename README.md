@@ -21,7 +21,7 @@ LoraWAN is a open, non encrypted data transmission protocol which uses *unlicens
 <a name="esp32-setup"></a>
 ## ESP32 Setup
 
-Currently, we are using the LILYGO® TTGO LORA SX1278 ESP32 module, an ESP32 micrcontroller with an integrated LoRAWAN chip and a additional OLED display. 
+Currently, we are using the LILYGO® TTGO LORA SX1278 ESP32 module, an ESP32 micrcontroller with an integrated LoRAWAN chip and an additional OLED display. 
 
 <p align="center"><img width="30%" src="https://imgaz1.staticbg.com/thumb/large/oaupload/ser1/banggood/images/30/2C/bee28b47-7aac-43bd-bc75-8f99fcf2b043.JPG"></p>
 
@@ -32,9 +32,9 @@ Our board consits of the following components:
   - bidirectional send/receive module (but __not__ at the same time!) via SPI interface
   - 433MHz frequency, high sensitivity around -148dBm
   - +20dBm output power
-  - Data rates: 150 Mbps@11n HT40, 72 Mbps@11n HT20, 54 Mbps@11g, 11 Mbps@11b
-  - Transmit power: 19.5 dBm@11b, 16.5 dBm@11g, 15.5 dBm@11n
-  - Receiver sensitivity up to -98 dBm
+  - data rates: 150 Mbps@11n HT40, 72 Mbps@11n HT20, 54 Mbps@11g, 11 Mbps@11b
+  - transmit power: 19.5 dBm@11b, 16.5 dBm@11g, 15.5 dBm@11n
+  - receiver sensitivity up to -98 dBm
   - UDP sustained throughput of 135 Mbps
 - the main microcontroller also known as [ESP32](https://www.espressif.com/en/products/hardware/esp32/overview)
   - integrated WiFi module and antenna
@@ -49,7 +49,7 @@ First of all, we have to install several libraries to work with the current hard
 
 <p align="center"><img width="65%" src="arduino-setup.png"></p>
 
-Confirm the window, go to ``Tools -> Board -> Boards Manager...``, search for esp32 with confirming the installation and wait until all neccessary files are downloaded and set up. Now we can install the additional libraries to work with the OLED display or the LoRaWAN hardware. To get this done, open the menu entry under ``Tools -> Manage Libraries...`` and search for the following libraries [see also in [ESP32-LoRa-Setup.md](https://github.com/josephpal/esp32-LoraWAN/blob/master/ESP32-LoRa-Setup.md)] and install them one by one:
+Confirm the window, go to ``Tools -> Board -> Boards Manager...``, search for esp32, confirm the installation and wait until all neccessary files are downloaded and set up. Now we can install the additional libraries to work with the OLED display or the LoRaWAN hardware. To get this done, open the menu entry under ``Tools -> Manage Libraries...`` and search for the following libraries [see also in [ESP32-LoRa-Setup.md](https://github.com/josephpal/esp32-LoraWAN/blob/master/ESP32-LoRa-Setup.md)] and install them one by one:
 
 - LoRa by Sandeep Mistry
 - Adafruit SSD1306
@@ -57,7 +57,7 @@ Confirm the window, go to ``Tools -> Board -> Boards Manager...``, search for es
 
 <p align="center"><img width="65%" src="manage-libraries.png"></p>
 
-If the installation finished sucessfully, you should now be able to compile and run the basic LoRAWAN Send/Receive examples, which you can find under the sub directory ``examples/``. You only have to make sure to change the frequency band to 433MHz, and choosing the right hardware platform under ``Tools -> Board -> TTGO LoRa32-OLED V1 board``. Please keep in mind that each LoRaWAN device is theoretically capable of sending or receiving on all available frequency bands. But due to the fact that we have local restrictions by law which frequency band we are allowed to use, it is mandatory to use the one for your region.
+If the installation finished sucessfully, you should now be able to compile and run the basic LoRAWAN Send/Receive examples, which you can find under the sub directory ``examples/``. You only have to change the frequency band to 433MHz and choose the right hardware platform under ``Tools -> Board -> TTGO LoRa32-OLED V1 board``. Please keep in mind that each LoRaWAN device is theoretically capable of sending or receiving on all available frequency bands. But due to the fact that we have local restrictions by law which frequency band we are allowed to use, it is mandatory to use the one for your region.
 
 For further information regarding the installation setup, please take a look into the created [ESP32-LoRa-Setup.md](https://github.com/josephpal/esp32-LoraWAN/blob/master/ESP32-LoRa-Setup.md) readme file.
 
@@ -70,19 +70,19 @@ The following picture shows a detailed overview of the current pin assignment th
 <a name="overview"></a>
 ## Overview
 
-The next tow chapters will focus on a short summary about the main problem using LoRaWAN as a transmission protocoll and the main aim of this project.
+The next two chapters will focus on a short summary about the main problem using LoRaWAN as a transmission protocoll and the main aim of this project.
 
 <a name="problem-definition"></a>
 ### Problem definition
 
-There are two main problems in the transmission process using LoRaWAN. Like it was descriebed earlier, LoraWAN is an open transmission channel, that means each message we send can be received from anyone else. Basically the protocol doesn´t contain an encryption process, so we have to encrypt the data on our own before sending it. However the LoRAWAN device is not capable of sending and receiving at the same time, so no bidirectional operation mode is available. To reduce package collision or package loss while sending and receiving, it is mandatory to implement a secure send and receive process like the CAN protocol already has. 
+There are two main problems in the transmission process using LoRaWAN. Like it was described earlier, LoraWAN is an open transmission channel, that means each message we send can be received from anyone else. Basically the protocol doesn´t contain an encryption process, so we have to encrypt the data on our own before sending it. However the LoRAWAN device is not capable of sending and receiving at the same time, so no bidirectional operation mode is available. To reduce package collision or package loss while sending and receiving, it is mandatory to implement a secure send and receive process like the CAN protocol already has. 
 
-To guarantee a flexible and easy to use method on displaying the messages on the oled dispaly of our board, we have to implement - based on a example were a oled display was already in use - a class to handle that process. 
+To guarantee a flexible and easy to use method on displaying the messages on the oled dispaly of our board, we have to implement - based on an example were an oled display was already in use - a class to handle that process. 
 
 <a name="objective-of-the-documentation"></a>
 ### Objective of the documentation
 
-The first step of our project will be to implement a ```LoRaHandler.h``` class, which contains the basic functions of sending, receiving, encrypting and decrypting messages. Furthermore methods like checking for package collision or message timout will be added. For displaying the results, a ```OLEDDisplay.h```class will be created, which garantee a easy and flexibel access to the display for poping up the incomming messages.
+The first step of our project will be to implement a ```LoRaHandler.h``` class, which contains the basic functions of sending, receiving, encrypting and decrypting messages. Furthermore methods like checking for package collision or message timout will be added. For displaying the results, a ```OLEDDisplay.h```class will be created, which guarantee an easy and flexibel access to the display for poping up the incomming messages.
 
 In summary, the ```LoRaHandler.h``` class should fulfill the following aspects:
 - setting up the device to get fully access to all hardware features
@@ -148,7 +148,7 @@ If we want to encrypt our transmission, we have to define a cipher key. However,
 | 0xFE | device address space |
 | 0xFF  | reserved broadcast address  |
 
-Each package we transmit doesn't only contain the message itself, furthermore it contains a lot more, which is necessary for example to identify whether the packe is dedicated for me or to recognize we lost a package during our tranmission. For these scenarios and the ones we mentioned [above](#objective-of-the-documentation), it is obligated to create for each message a package, which contains a package header and the message we want to transmit. 
+Each package we transmit doesn't only contain the message itself, furthermore it contains a lot more, which is necessary for example to identify whether the package is dedicated for me or not or to recognize we lost a package during our tranmission. For these scenarios and the ones we mentioned [above](#objective-of-the-documentation), it is obligated to create for each message a package, which contains a package header and the message we want to transmit. 
 
 So basically a package consists of the information below and can be also found the the class property ```String package[]``` of the ```LoRaHandler.h``` class:
 - destination address
@@ -160,7 +160,7 @@ So basically a package consists of the information below and can be also found t
 ### transmission process
 
 To point out which information will be transmitted, we will make a short example of transmitting the message "local".
-Let's say a handshake between both communication partners was already done and the transmitted so far 128 packages. So our next package number will be the last number incremented by one. Our message itself has five characters, after encrypting the payload of our package will have 16 characters (for more information about the encryption process please take a look at this [sub-repository](https://github.com/josephpal/esp32-Encrypt/blob/master/documentation/Cipher-class-explanation.pdf)). Encrypting the string "local" with the ciphering key mentioned above will result in the following text phrase
+Let's say a handshake between both communication partners was already done and they transmitted so far 128 packages. So our next package number will be the last number incremented by one. Our message itself has five characters, after encrypting the payload of our package we will have 16 characters (for more information about the encryption process please take a look at this [sub-repository](https://github.com/josephpal/esp32-Encrypt/blob/master/documentation/Cipher-class-explanation.pdf)). Encrypting the string "local" with the ciphering key mentioned above will result into the following text phrase
 
 ``` 
     cipher->encrypt("local") -> Ó ñ . . K ¶ Ý " Õ ¢ È  -  . V
@@ -172,7 +172,7 @@ or displayed as hex values:
     cipher->encrypt("local") -> d3 f1 92 87 4b b6 dd 22 d5 a2 c8 95 2d 90 0e 56 
 ```
 
-Predefined the sender address will be set to ```0xAA``` and our receiver will listen on ```0xBB```. Please keep in mind, that in reallity we don't have sender and receiver, because usually we have a bidirectinal communication. Each sender is at the same time a receiver as well and reversed. So our package we will transmit will look like mentioned below:
+Predefined the sender address will be set to ```0xAA``` and our receiver will listen on ```0xBB```. Please keep in mind, that in reallity we don't have sender and receiver, because usually we have a bidirectinal communication. Each sender is at the same time a receiver as well and reversed. Nevertheless our package we will transmit will look like mentioned below:
 
 | description  | content |
 | --- | --- |
@@ -182,13 +182,13 @@ Predefined the sender address will be set to ```0xAA``` and our receiver will li
 | payload length  | 5 |
 | encrypted message | Ó ñ . . K ¶ Ý " Õ ¢ È  -  . V |
 
-Every package has a kind of life cycle. After a package is created and transmitted, the sender will wait until he receives a confirmation, a resent request or a timeout. Those three cases are possible, because either a package get lost, or our information in the package header is corrupted. In both cases the receiver will request the sent package again. It is also possible that the receiver never received our package and in case we didn't implemented a timeout functionallity, we would wait infinitely for a response.
+Every package has a kind of life cycle. After a package is created and transmitted, the sender will wait until he receives a confirmation, a resent request or a timeout. Those three cases are possible, because either a package get lost, or our information in the package header is corrupted. In both cases the receiver will request to sent the package again. It is also possible that the receiver never received our package and in case we didn't implemented a timeout functionallity, we would wait infinitely for a response.
 
 <p align="center"><img width="85%" src="documentation/sender-receiver-transmission.png"></img></p>
 
-If a confirmation packages is received by the sender, he can proceed sending an new messgae. In case of a timeout, we currently decided to send a new message instead of trying to send the old message again (has to be done file ```LoRaHandler.cpp``` in line 240 and following). If the sender receives a resent request, the already as transmitted message will be resent and as long as he won't receive a confirmation or timeout a new transmission is blocked.
+If a confirmation packages is received by the sender, he can proceed sending a new messgae. In case of a timeout, we currently decided to send a new message instead of trying to send the old message again (has to be done in file ```LoRaHandler.cpp```, line 240 and following). If the sender receives a resent request, the already as transmitted marked message will be resent and as long as he won't receive a confirmation or timeout a new transmission is blocked.
 
-Each package which is transmitted will be counted, for sending the current number of sent package will be stored in the ```LoRaHandler.h``` class property ```msgCount``` (equivalent to msgID) and for receiving in ```lastPacketID``` (equivalent to pkgID). Like mentioned above, this is necessary for detecting package loss and therefore mandatory for creating a resent request. Both communication partners have those two counters. For the handshake process, the ```lastPacketID``` counter from the receiver will be set to the ```msgCount``` of the sender, so the next package will have the id equal to the ```lastPacketID``` incremented by one. The two ```msgCount``` counters can be out of sync, because also the receiver in case of sending a confirmation package (received, resent) will count his transmitted packages and the sender will check the package number of the confirmation as well.
+Each package which is transmitted will be count, for sending, the current number of sent packages will be stored in the ```LoRaHandler.h``` class property ```msgCount``` (equivalent to msgID) and for receiving in ```lastPacketID``` (equivalent to pkgID). Like mentioned above, this is necessary for detecting package loss and therefore mandatory for creating a resent request. Both communication partners have those two counters. For the handshake process, the ```lastPacketID``` counter from the receiver will be set to the ```msgCount``` of the sender, so the next package will have the id equal to the ```lastPacketID``` incremented by one. The two ```msgCount``` counters can be out of sync, because also the receiver in case of sending a confirmation package (received, resent) will count his transmitted packages and the sender will check the package number of the confirmation as well.
 
 A confirmation of a confirmation package itself is prohibited, otherwise we would fall into a closed loop. This also applies in the event of a resent request (note: this case is currently note implemented!).
 
@@ -199,12 +199,12 @@ The whole process during sending a package and processing the response is shown 
 <a name="open-issues"></a>
 ## Open issues
 
-Still, this implementation of a LoRaWAN protocol is in a early state there is still a lot of work to do. The list below includes known issues as well as missing implementation parts:
+Still, this implementation of a LoRaWAN protocol is in an early state and there is still a lot of work to do. The list below includes known issues as well as missing implementation parts:
 
-- so far, start a transmission and communicate bidirectional is not handled properly. A method to listen to the channel as well as asking for starting a transmission is mandatory to guarantee a stable transmission.
+- so far, start a transmission and communicate bidirectional is not handled properly. A method to listen to the channel if its free as well as asking for starting a transmission is mandatory to guarantee a stable transmission.
 - a resent request of a broken resent package will result into a infinitely closed loop as mentioned for the confirmation case (confirm the confirmation of the confirmation package ...).
 - packages which timed out should be resent form the sender.
-- optimizing the encryption process. Sometimes the decrypted result doesn't match with the transmitted payload length. We were able to trace back the issue to the sender, it seems that sometimes there is a problem during encrypting and transmitting.
+- optimizing the encryption process. Sometimes the decrypted result doesn't match with the transmitted payload length. We were able to trace back the issue to the sender, it seems that sometimes there is a problem during encrypting and transmitting, but not on the receiver side.
 
 <a name="references"></a>
 ## References
