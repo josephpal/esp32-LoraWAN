@@ -62,7 +62,7 @@ For further information regarding the installation setup, please take a look int
 
 ### Pinout
 
-The following picture shows a detailed overview about the current pin assigment of the TTGO LORA SX1278 ESP32 module.
+The following picture shows a detailed overview of the current pin assignment the TTGO LORA SX1278 ESP32 module offers.
 
 <p align="center"><img width="90%" src="https://imgaz.staticbg.com/images/oaupload/ser1/banggood/images/15/B3/40996a08-9df2-46a1-b320-9f9b1a8a16a1.jpg"></img></p>
 
@@ -182,9 +182,17 @@ Predefined the sender address will be set to ```0xAA``` and our receiver will li
 
 Every package has a kind of life cycle. After a package is created and transmitted, the sender will wait until he receives a confirmation, a resent request or a timeout. Those three cases are possible, because either a package get lost, or our information in the package header is corrupted. In both cases the receiver will request the sent package again. It is also possible that the receiver never received our package and in case we didn't implemented a timeout functionallity, we would wait infinitely for a response.
 
+<p align="center"><img width="85%" src="documentation/sender-receiver-transmission.png"></img></p>
 
+If a confirmation packages is received by the sender, he can proceed sending an new messgae. In case of a timeout, we currently decided to send a new message instead of trying to send the old message again (has to be done file ```LoRaHandler.cpp``` in line 240 and following). If the sender receives a resent request, the already as transmitted message will be resent and as long as he won't receive a confirmation or timeout a new transmission is blocked.
+
+Each package which is transmitted will be counted, for sending the current number of sent package will be stored in the ```LoRaHandler.h``` class property ```msgCount``` (equivalent to msgID) and for receiving in ```lastPacketID``` (equivalent to pkgID). Like mentioned above, this is necessary for detecting package loss and therefore mandatory for creating a resent request. Both communication partners have those two counters. For the handshake process, the ```lastPacketID``` counter from the receiver will be set to the ```msgCount``` of the sender, so the next package will have the id equal to the ```lastPacketID``` incremented by one. The two ```msgCount``` counters can be out of sync, because also the receiver in case of sending a confirmation package (received, resent) will count his transmitted packages and the sender will check the package number of the confirmation as well.
+
+A confirmation of a confirmation package itself is prohibited, otherwise we would fall into a closed loop. This also applies in the event of a resent request (note: this case is currently note implemented!).
 
 <p align="center"><img width="90%" src="documentation/send-receive.png"></img></p>
+
+The whole process during sending a package and processing the response is shown in the picture above.
 
 <a name="references"></a>
 ## References
