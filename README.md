@@ -48,7 +48,7 @@ First of all, we have to install several libraries to work with the current hard
 
 <p align="center"><img width="65%" src="arduino-setup.png"></p>
 
-Confirm the window, go to ``Tools -> Board -> Boards Manager...``, search for esp32 with confirming the installation and wait until all neccessary files are downloaded and set up. After that you are able to proceed with the next steps. Now we can install the additional libraries to work with the OLED display or the LoRaWAN hardware. To get this done, open the menu entry under ``Tools -> Manage Libraries...`` and search and install the following libraries [see also in [ESP32-LoRa-Setup.md](https://github.com/josephpal/esp32-LoraWAN/blob/master/ESP32-LoRa-Setup.md)]:
+Confirm the window, go to ``Tools -> Board -> Boards Manager...``, search for esp32 with confirming the installation and wait until all neccessary files are downloaded and set up. Now we can install the additional libraries to work with the OLED display or the LoRaWAN hardware. To get this done, open the menu entry under ``Tools -> Manage Libraries...`` and search for the following libraries [see also in [ESP32-LoRa-Setup.md](https://github.com/josephpal/esp32-LoraWAN/blob/master/ESP32-LoRa-Setup.md)] and install them one by one:
 
 - LoRa by Sandeep Mistry
 - Adafruit SSD1306
@@ -56,40 +56,129 @@ Confirm the window, go to ``Tools -> Board -> Boards Manager...``, search for es
 
 <p align="center"><img width="65%" src="manage-libraries.png"></p>
 
-If the installation finishes sucessfully, you should now be able to compile and run the basic LoRAWAN Send/Receive examples, which you can find under the sub directory ``examples/``. You only have to make sure to change the frequency band to 433MHz, and choosing the right hardware platform under ``Tools -> Board -> TTGO LoRa32-OLED V1 board``.
+If the installation finished sucessfully, you should now be able to compile and run the basic LoRAWAN Send/Receive examples, which you can find under the sub directory ``examples/``. You only have to make sure to change the frequency band to 433MHz, and choosing the right hardware platform under ``Tools -> Board -> TTGO LoRa32-OLED V1 board``. Please keep in mind that each LoRaWAN device is theoretically capable of sending or receiving on all available frequency bands. But due to the fact that we have local restrictions by law which frequency band we are allowed to use, it is mandatory to use the one for your region.
 
 For further information regarding the installation setup, please take a look into the created [ESP32-LoRa-Setup.md](https://github.com/josephpal/esp32-LoraWAN/blob/master/ESP32-LoRa-Setup.md) readme file.
 
 ### Pinout
 
-In the following picture shows a detailed overview about the current pin assigment of the TTGO LORA SX1278 ESP32 module.
+The following picture shows a detailed overview about the current pin assigment of the TTGO LORA SX1278 ESP32 module.
 
 <p align="center"><img width="90%" src="https://imgaz.staticbg.com/images/oaupload/ser1/banggood/images/15/B3/40996a08-9df2-46a1-b320-9f9b1a8a16a1.jpg"></img></p>
 
 <a name="overview"></a>
 ## Overview
 
-The next to chapters will focus on a short summary about the main problem using LoRaWAN as an transmission protocoll and the main aim of this project.
+The next tow chapters will focus on a short summary about the main problem using LoRaWAN as a transmission protocoll and the main aim of this project.
 
 <a name="problem-definition"></a>
 ### Problem definition
 
-There are two main problems in the trasmission process. Like it was descriebed earlier, LoraWAN is an open system, tht means everyone can use it. Thats why we have to check if the channel isn't used before sending something. The second problem is a security problem. The LoraWAN protocol doesn´t conntain an encryption process, so we have to encryped the data on our own before sending it. The last smal problem is the comunicaation with the dispaly. Even though we have an example it is some code necessary to cofigururate the display and show text on it, so it would be an advantage to organise this.
+There are two main problems in the transmission process using LoRaWAN. Like it was descriebed earlier, LoraWAN is an open transmission channel, that means each message we send can be received from anyone else. Basically the protocol doesn´t contain an encryption process, so we have to encrypt the data on our own before sending it. However the LoRAWAN device is not capable of sending and receiving at the same time, so no bidirectional operation mode is available. To reduce package collision or package loss while sending and receiving, it is mandatory to implement a secure send and receive process like the CAN protocol already has. 
 
+To guarantee a flexible and easy to use method on displaying the messages on the oled dispaly of our board, we have to implement - based on a example were a oled display was already in use - a class to handle that process. 
 
 <a name="objective-of-the-documentation"></a>
 ### Objective of the documentation
 
-So we have two aims for this project. First of all, we have to develop two classes. One bigger one for the LoraWAN system and a smaller one for the display. The second aim is the realization of an encrypion and a descrytion for the data. 
+The first step of our project will be to implement a ```LoRaHandler.h``` class, which contains the basic functions of sending, receiving, encrypting and decrypting messages. Furthermore methods like checking for package collision or message timout will be added. For displaying the results, a ```OLEDDisplay.h```class will be created, which garantee a easy and flexibel access to the display for poping up the incomming messages.
+
+In summary, the ```LoRaHandler.h``` class should fulfill the following aspects:
+- setting up the device to get fully access to all hardware features
+- sending messages
+- receiving messages
+- encryption and decryption of the transmission
+- some kind of handshake between the communication partners (e.g. through exchanging a package id)
+- package loss detection
+- confirmation of every reveived package, after that a new transmission is allowed
+- timeout handling
+- package collison detection
+
+And for the ```OLEDDisplay.h```class:
+- setting up the device be able to display text
+- clear display method
+- add a text string to the display and specify the textsize
+- automatic handling of displaying text with different textsizes
+- a infinitely text scroll mode, each new text message independent which textsize will be added to a new line and a method will take care of scrolling up the old content
 
 <a name="usage"></a>
 ## Usage
 
-<p align="center"><img width="90%" src="documentation/send-receive.png"></img></p>
-
 To get started with our created class, we have to include the ```LoRaHandler.h``` header file in our arduino project. Now its necessary to declare a global pointer of the LoRaHandler class, so every thread which will be instantiated has access to the member functions.
 
-If we want to encrypt our transmission, we have to define a cipher key. However, it is mandatory that both communication partners have the same key stored, so that they are able to encrypt and decrypt the sent and received packages due to the fact that we are using a [symetric encryption]().
+```cpp
+#include "LoRaHandler.h"
+
+LoRaHandler *lora;
+char *encryptionKey = "abcdefghijklmnop";
+
+void setup() {
+    /* initialize serial monitor */
+    Serial.begin(115200);
+
+    /* initialize LoRa WAN device */
+    lora = new LoRaHandler();
+
+    /* specify sender and receiver address */
+    lora->initialize(0xAA, 0xBB);
+
+    /* transmission will be encrypted */
+    lora->initEncryption(encryptionKey);
+
+    /* start listining in the background for new incomming messages */
+    lora->startReceiveListner();
+}
+
+void loop() {
+    delay(500);
+    lora->send("broadcast", 0xFF);
+    delay(500);
+    lora->send("local");
+}
+```
+
+If we want to encrypt our transmission, we have to define a cipher key. However, it is mandatory that both communication partners have the same key stored, so that they are able to encrypt and decrypt the sent and received packages due to the fact that we are using a [symetric encryption](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard). To send a message, we have to call the method send and by passing an address, we can define to whom the package will be send to. Our device address system can be found in the following table:
+
+| address  | description |
+| --- | --- |
+|  0x00 |  |
+| ... |  |
+| 0xFE | device address space |
+| 0xFF  | reserved broadcast address  |
+
+Each package we transmit doesn't only contain the message itself, furthermore it contains a lot more, which is necessary for example to identify whether the packe is dedicated for me or to recognize we lost a package during our tranmission. For these scenarios and the ones we mentioned [above](#objective-of-the-documentation), it is obligated to create for each message a package, which contains a package header and the message we want to transmit. 
+
+So basically a package consists of the information below and can be also found the the class property ```String package[]``` of the ```LoRaHandler.h``` class:
+- destination address
+- sender address
+- message or package id
+- unencrypted payload length
+- encrypted payload or message
+
+To point out which information will be transmitted, we will make a short example of transmitting the message "local".
+Let's say a handshake between both communication partners was already done and the transmitted so far 128 packages. So our next package number will be the last number incremented by one. Our message itself has five characters, after encrypting the payload of our package will have 16 characters (for more information about the encryption process please take a look at this [sub-repository](https://github.com/josephpal/esp32-Encrypt/blob/master/documentation/Cipher-class-explanation.pdf)). Encrypting the string "local" with the ciphering key mentioned above will result in the following text phrase
+
+``` 
+    cipher->encrypt("local") -> Ó ñ . . K ¶ Ý " Õ ¢ È  -  . V
+```
+
+or displayed as hex values:
+
+``` 
+    cipher->encrypt("local") -> d3 f1 92 87 4b b6 dd 22 d5 a2 c8 95 2d 90 0e 56 
+```
+
+Predefined the sender address will be set to ```0xAA``` and our receiver will listen on ```0xBB```. So our package we will transmit will look like mentioned below:
+
+| description  | content |
+| --- | --- |
+|  destination address |  |
+| sender address |  |
+| package id |  |
+| payload length  |  |
+| encrypted message |  |
+
+<p align="center"><img width="90%" src="documentation/send-receive.png"></img></p>
 
 <a name="references"></a>
 ## References
