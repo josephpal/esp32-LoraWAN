@@ -155,6 +155,8 @@ So basically a package consists of the information below and can be also found t
 - unencrypted payload length
 - encrypted payload or message
 
+### transmission process
+
 To point out which information will be transmitted, we will make a short example of transmitting the message "local".
 Let's say a handshake between both communication partners was already done and the transmitted so far 128 packages. So our next package number will be the last number incremented by one. Our message itself has five characters, after encrypting the payload of our package will have 16 characters (for more information about the encryption process please take a look at this [sub-repository](https://github.com/josephpal/esp32-Encrypt/blob/master/documentation/Cipher-class-explanation.pdf)). Encrypting the string "local" with the ciphering key mentioned above will result in the following text phrase
 
@@ -168,15 +170,19 @@ or displayed as hex values:
     cipher->encrypt("local") -> d3 f1 92 87 4b b6 dd 22 d5 a2 c8 95 2d 90 0e 56 
 ```
 
-Predefined the sender address will be set to ```0xAA``` and our receiver will listen on ```0xBB```. So our package we will transmit will look like mentioned below:
+Predefined the sender address will be set to ```0xAA``` and our receiver will listen on ```0xBB```. Please keep in mind, that in reallity we don't have sender and receiver, because usually we have a bidirectinal communication. Each sender is at the same time a receiver as well and reversed. So our package we will transmit will look like mentioned below:
 
 | description  | content |
 | --- | --- |
-|  destination address |  |
-| sender address |  |
-| package id |  |
-| payload length  |  |
-| encrypted message |  |
+|  destination address | 0xBB |
+| sender address | 0xAA |
+| package id | 129 |
+| payload length  | 5 |
+| encrypted message | Ó ñ . . K ¶ Ý " Õ ¢ È  -  . V |
+
+Every package has a kind of life cycle. After a package is created and transmitted, the sender will wait until he receives a confirmation, a resent request or a timeout. Those three cases are possible, because either a package get lost, or our information in the package header is corrupted. In both cases the receiver will request the sent package again. It is also possible that the receiver never received our package and in case we didn't implemented a timeout functionallity, we would wait infinitely for a response.
+
+
 
 <p align="center"><img width="90%" src="documentation/send-receive.png"></img></p>
 
