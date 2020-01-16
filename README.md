@@ -10,12 +10,13 @@ An example of implementing a secure data transmission protocol for LoraWAN.
   * [Problem definition](#problem-definition)
   * [Objective of the documentation](#objective-of-the-documentation)
 * [Usage](#usage)
+* [Open issues](#open-issues)
 * [References](#references)
 
 <a name="introduction"></a>
 ## Introduction
 
-LoraWAN is a open, non encrypted data transmission protocoll, which uses *unlicensed radio spectrum in the Industrial, Scientific, and Medical (ISM) bands to enable low power and wide area communication between remote sensors* [4](#references) and different clients connected to the network. It usually uses three different frequency bands regarding to the local restrictions by several regions: 433E6 for Asia (433MHz), 866E6 for Europe (866MHz), 915E6 for North America (915MHz).
+LoraWAN is a open, non encrypted data transmission protocol which uses *unlicensed radio spectrum in the Industrial, Scientific, and Medical (ISM) bands to enable low power and wide area communication between remote sensors* [4](#references) and different clients connected to the network. It usually uses three different frequency bands regarding to the local restrictions by several regions: 433E6 for Asia (433MHz), 866E6 for Europe (866MHz), 915E6 for North America (915MHz).
 
 <a name="esp32-setup"></a>
 ## ESP32 Setup
@@ -93,6 +94,7 @@ In summary, the ```LoRaHandler.h``` class should fulfill the following aspects:
 - confirmation of every reveived package, after that a new transmission is allowed
 - timeout handling
 - package collison detection
+- start transmission method (listen to the channel and request a transmission)
 
 And for the ```OLEDDisplay.h```class:
 - setting up the device be able to display text
@@ -193,6 +195,16 @@ A confirmation of a confirmation package itself is prohibited, otherwise we woul
 <p align="center"><img width="90%" src="documentation/send-receive.png"></img></p>
 
 The whole process during sending a package and processing the response is shown in the picture above.
+
+<a name="open-issues"></a>
+## Open issues
+
+Still, this implementation of a LoRaWAN protocol is in a early state there is still a lot of work to do. The list below includes known issues as well as missing implementation parts:
+
+- so far, start a transmission and communicate bidirectional is not handled properly. A method to listen to the channel as well as asking for starting a transmission is mandatory to guarantee a stable transmission.
+- a resent request of a broken resent package will result into a infinitely closed loop as mentioned for the confirmation case (confirm the confirmation of the confirmation package ...).
+- packages which timed out should be resent form the sender.
+- optimizing the encryption process. Sometimes the decrypted result doesn't match with the transmitted payload length. We were able to trace back the issues to the sender, it seems that there is a problem during encrypting and transmitting.
 
 <a name="references"></a>
 ## References
